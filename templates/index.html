@@ -189,7 +189,10 @@
             max-width: 100%;
             outline: none;
         }
-
+       input[type="date"] {
+       -webkit-appearance: none;
+       appearance: none;
+}
         input:focus,
         select:focus {
             border-color: var(--accent);
@@ -418,6 +421,11 @@
                 align-items: flex-start;
                 gap: 4px;
             }
+ .filter-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
         }
     </style>
 </head>
