@@ -348,6 +348,7 @@
 
         /* ===== 반응형 ===== */
 
+        /* 768px 이하에서는 폼을 1열로 (모든 모바일·태블릿에서 세로 배치) */
         @media (max-width: 768px) {
             header {
                 flex-direction: column;
@@ -366,10 +367,11 @@
             }
 
             form {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-columns: 1fr;
             }
         }
 
+        /* 그래프, 카드 패딩 살짝 줄이기 */
         @media (max-width: 600px) {
             .chart-container {
                 flex-direction: column;
@@ -384,11 +386,8 @@
             }
         }
 
+        /* 작은 모바일에서 헤더 버튼/요약 정렬 */
         @media (max-width: 520px) {
-            form {
-                grid-template-columns: 1fr;
-            }
-
             .header-buttons {
                 flex-direction: column;
                 align-items: stretch;
