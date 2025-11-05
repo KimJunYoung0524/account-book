@@ -8,22 +8,44 @@ DATA_FILE = 'data.json'
 
 
 # ------------------ 데이터 로드 & 저장 ------------------
+def save_data(data_list):
+    with open(DATA_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data_list, f, ensure_ascii=False, indent=2)
+
+
 def load_data():
+    """data.json을 읽어서 리스트 반환 + id 없는 항목에 id 부여"""
     if not os.path.exists(DATA_FILE):
         return []
     try:
         with open(DATA_FILE, 'r', encoding='utf-8') as f:
             data = json.load(f)
-            if isinstance(data, list):
-                return data
-            return []
+            if not isinstance(data, list):
+                return []
+
+        # id가 없는 기존 데이터에 id 자동 부여
+        changed = False
+        current_max_id = 0
+        for item in data:
+            try:
+                if 'id' in item:
+                    current_max_id = max(current_max_id, int(item.get('id', 0)))
+            except Exception:
+                pass
+
+        next_id = current_max_id + 1
+        for item in data:
+            if 'id' not in item:
+                item['id'] = next_id
+                next_id += 1
+                changed = True
+
+        if changed:
+            save_data(data)
+
+        return data
     except Exception:
         return []
-
-
-def save_data(data_list):
-    with open(DATA_FILE, 'w', encoding='utf-8') as f:
-        json.dump(data_list, f, ensure_ascii=False, indent=2)
 
 
 # ------------------ HTML 페이지 ------------------
@@ -62,6 +84,25 @@ def index():
         header h1 { font-size: 1.4rem; margin: 0; display: flex; align-items: center; gap: 8px; }
         header h1 span.logo-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--accent); display: inline-block; }
         header .subtitle { margin: 0; font-size: 0.85rem; color: var(--text-sub); }
+
+        .header-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+            font-size: 0.8rem;
+        }
+        .header-user {
+            color: var(--text-sub);
+        }
+        .header-user strong {
+            color: var(--text-main);
+        }
+        .header-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
         .card {
             background-color: var(--card-bg); border-radius: 16px; padding: 16px 20px 20px;
             box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06); border: 1px solid var(--border); margin-bottom: 16px;
@@ -86,6 +127,7 @@ def index():
         input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-light); }
         .form-actions { text-align: right; }
         .error-message { color: var(--danger); font-size: 0.8rem; margin-top: 4px; }
+
         .summary-bar {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 6px; font-size: 0.85rem; color: var(--text-sub);
@@ -97,12 +139,17 @@ def index():
             padding: 8px 6px; border-bottom: 1px solid var(--border);
             text-align: left; white-space: nowrap;
         }
-        th:last-child, td:last-child { width: 40%; white-space: normal; }
+        th:last-child, td:last-child { white-space: nowrap; }
         th { font-weight: 600; color: var(--text-sub); }
         tbody tr:hover { background-color: #f3f4ff; }
         .amount-income { color: #16a34a; font-weight: 600; }
         .amount-expense { color: #dc2626; font-weight: 600; }
         .no-data { text-align: center; padding: 14px 0; color: var(--text-sub); }
+
+        .btn-delete-row {
+            padding: 4px 10px;
+            font-size: 0.75rem;
+        }
 
         @media (max-width: 760px) {
             form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -110,6 +157,7 @@ def index():
         @media (max-width: 520px) {
             form { grid-template-columns: 1fr; }
             header { flex-direction: column; align-items: flex-start; }
+            .header-right { align-items: flex-start; }
         }
 
         .filter-row {
@@ -153,6 +201,31 @@ def index():
             text-align: center;
             margin-top: 4px;
         }
+
+        .month-summary-body {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+        .month-summary-numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .month-summary-numbers span strong {
+            color: var(--text-main);
+        }
+        .month-top-expense-list {
+            margin: 4px 0 0;
+            padding-left: 18px;
+            font-size: 0.8rem;
+        }
+        .month-summary-text {
+            margin: 0;
+            color: var(--text-sub);
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body>
@@ -162,7 +235,15 @@ def index():
             <h1><span class="logo-dot"></span> 가계부</h1>
             <p class="subtitle">수입·지출을 간단하게 기록하고 엑셀로 관리하세요.</p>
         </div>
-        <button class="btn secondary" id="btn-download-top">⬇️ 엑셀 다운로드</button>
+        <div class="header-right">
+            <div class="header-user">
+                현재 사용자: <strong id="current-user-label">guest</strong>
+            </div>
+            <div class="header-buttons">
+                <button class="btn secondary" id="btn-change-user">사용자 변경</button>
+                <button class="btn secondary" id="btn-download-top">⬇️ 엑셀 다운로드</button>
+            </div>
+        </div>
     </header>
 
     <!-- 월별 필터 카드 -->
@@ -179,7 +260,26 @@ def index():
                 <label>&nbsp;</label>
                 <button class="btn secondary" id="btn-clear-filter">전체 보기</button>
             </div>
-            <p class="filter-hint">선택한 월 기준으로 목록, 합계, 그래프가 모두 필터링됩니다. (미선택 시 전체)</p>
+            <p class="filter-hint">선택한 월 기준으로 목록, 합계, 요약, 그래프가 모두 필터링됩니다. (미선택 시 전체)</p>
+        </div>
+    </section>
+
+    <!-- 이번 달 요약 카드 -->
+    <section class="card">
+        <div class="card-header">
+            <h2>이번 달 요약</h2>
+        </div>
+        <div class="month-summary-body">
+            <p id="month-summary-label" class="month-summary-text">전체 기간 기준 요약입니다.</p>
+            <div class="month-summary-numbers">
+                <span>수입: <strong id="month-income">0</strong> 원</span>
+                <span>지출: <strong id="month-expense">0</strong> 원</span>
+                <span>잔액: <strong id="month-balance">0</strong> 원</span>
+            </div>
+            <div>
+                <p class="month-summary-text">지출 TOP 3 카테고리</p>
+                <ul id="month-top-expense-list" class="month-top-expense-list"></ul>
+            </div>
         </div>
     </section>
 
@@ -248,11 +348,12 @@ def index():
                     <th>소분류</th>
                     <th>금액</th>
                     <th>내용</th>
+                    <th>작업</th>
                 </tr>
                 </thead>
                 <tbody id="table-body">
                 <tr class="no-data-row">
-                    <td colspan="5" class="no-data">아직 저장된 내역이 없습니다.</td>
+                    <td colspan="6" class="no-data">아직 저장된 내역이 없습니다.</td>
                 </tr>
                 </tbody>
             </table>
@@ -289,6 +390,8 @@ def index():
         "지출": ["식비", "교통", "주거", "통신", "쇼핑", "문화생활", "교육", "의료/건강", "기타지출"]
     };
 
+    let currentUser = 'guest';
+
     const form = document.getElementById('account-form');
     const dateInput = document.getElementById('date');
     const amountInput = document.getElementById('amount');
@@ -312,6 +415,15 @@ def index():
     const mainChartEmptyText = document.getElementById('main-chart-empty');
     const expenseChartCanvas = document.getElementById('expense-pie-chart');
     const expenseChartEmptyText = document.getElementById('expense-chart-empty');
+
+    const currentUserLabel = document.getElementById('current-user-label');
+    const btnChangeUser = document.getElementById('btn-change-user');
+
+    const monthSummaryLabel = document.getElementById('month-summary-label');
+    const monthIncomeEl = document.getElementById('month-income');
+    const monthExpenseEl = document.getElementById('month-expense');
+    const monthBalanceEl = document.getElementById('month-balance');
+    const monthTopList = document.getElementById('month-top-expense-list');
 
     let allItems = [];
     let mainPieChart = null;
@@ -484,6 +596,50 @@ def index():
         updateExpensePieChart(items);
     }
 
+    function updateMonthlySummary(items, monthValue) {
+        let income = 0;
+        let expense = 0;
+
+        items.forEach(it => {
+            const amt = Number(it.amount) || 0;
+            if (it.main_category === '수입') income += amt;
+            if (it.main_category === '지출') expense += amt;
+        });
+
+        monthIncomeEl.textContent = formatNumber(income);
+        monthExpenseEl.textContent = formatNumber(expense);
+        monthBalanceEl.textContent = formatNumber(income - expense);
+
+        if (monthValue) {
+            monthSummaryLabel.textContent = `${monthValue} 기준 요약입니다.`;
+        } else {
+            monthSummaryLabel.textContent = '전체 기간 기준 요약입니다.';
+        }
+
+        monthTopList.innerHTML = '';
+        const expenses = items.filter(it => it.main_category === '지출');
+        if (!expenses.length) {
+            const li = document.createElement('li');
+            li.textContent = '지출 내역이 없습니다.';
+            monthTopList.appendChild(li);
+            return;
+        }
+
+        const sums = {};
+        expenses.forEach(it => {
+            const key = it.sub_category || '기타';
+            const amt = Number(it.amount) || 0;
+            sums[key] = (sums[key] || 0) + amt;
+        });
+
+        const sorted = Object.entries(sums).sort((a, b) => b[1] - a[1]).slice(0, 3);
+        sorted.forEach(([name, value]) => {
+            const li = document.createElement('li');
+            li.textContent = `${name}: ${formatNumber(value)} 원`;
+            monthTopList.appendChild(li);
+        });
+    }
+
     function renderTable(items) {
         tbody.innerHTML = "";
 
@@ -491,7 +647,7 @@ def index():
             const tr = document.createElement('tr');
             tr.classList.add('no-data-row');
             const td = document.createElement('td');
-            td.colSpan = 5;
+            td.colSpan = 6;
             td.className = 'no-data';
             td.textContent = '아직 저장된 내역이 없습니다.';
             tr.appendChild(td);
@@ -545,6 +701,14 @@ def index():
             tdMemo.textContent = item.memo || '';
             tr.appendChild(tdMemo);
 
+            const tdActions = document.createElement('td');
+            const btnDel = document.createElement('button');
+            btnDel.textContent = '삭제';
+            btnDel.className = 'btn secondary btn-delete-row';
+            btnDel.dataset.id = item.id;
+            tdActions.appendChild(btnDel);
+            tr.appendChild(tdActions);
+
             tbody.appendChild(tr);
         });
 
@@ -564,11 +728,12 @@ def index():
         }
 
         renderTable(items);
+        updateMonthlySummary(items, month);
     }
 
     async function fetchList() {
         try {
-            const res = await fetch('/api/list');
+            const res = await fetch('/api/list?user=' + encodeURIComponent(currentUser));
             const data = await res.json();
             if (data.success) {
                 allItems = data.items || [];
@@ -613,7 +778,8 @@ def index():
                     amount: amount,
                     main_category: mainCategory,
                     sub_category: subCategory,
-                    memo: memo
+                    memo: memo,
+                    user: currentUser
                 })
             });
 
@@ -639,10 +805,41 @@ def index():
     }
 
     function downloadExcel() {
-        window.location.href = '/api/download';
+        window.location.href = '/api/download?user=' + encodeURIComponent(currentUser);
+    }
+
+    async function deleteItem(id) {
+        try {
+            const res = await fetch('/api/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8'
+                },
+                body: JSON.stringify({
+                    id: id,
+                    user: currentUser
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                alert(data.message || '삭제 중 오류가 발생했습니다.');
+                return;
+            }
+            await fetchList();
+        } catch (e) {
+            console.error(e);
+            alert('서버와 통신 중 오류가 발생했습니다.');
+        }
+    }
+
+    function initUser() {
+        const saved = localStorage.getItem('accountBookUser');
+        currentUser = saved && saved.trim() ? saved.trim() : 'guest';
+        currentUserLabel.textContent = currentUser;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        initUser();
         setToday();
         updateSubCategories();
         fetchList();
@@ -658,6 +855,27 @@ def index():
             monthFilter.value = '';
             applyFilterAndRender();
         });
+
+        btnChangeUser.addEventListener('click', () => {
+            const name = prompt('사용자 이름을 입력하세요.', currentUser);
+            if (!name) return;
+            const trimmed = name.trim();
+            if (!trimmed) return;
+            currentUser = trimmed;
+            localStorage.setItem('accountBookUser', currentUser);
+            currentUserLabel.textContent = currentUser;
+            fetchList();
+        });
+
+        tbody.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target.classList.contains('btn-delete-row')) {
+                const id = Number(target.dataset.id);
+                if (!id) return;
+                if (!confirm('이 항목을 삭제할까요?')) return;
+                deleteItem(id);
+            }
+        });
     });
 </script>
 </body>
@@ -668,6 +886,9 @@ def index():
 @app.route('/api/list', methods=['GET'])
 def api_list():
     data = load_data()
+    user = request.args.get('user')
+    if user:
+        data = [d for d in data if d.get('user', 'guest') == user]
     return jsonify({"success": True, "items": data})
 
 
@@ -682,22 +903,74 @@ def api_add():
     except ValueError:
         return jsonify({"success": False, "message": "금액은 숫자여야 합니다."}), 400
 
+    data = load_data()
+    current_max_id = 0
+    for item in data:
+        try:
+            current_max_id = max(current_max_id, int(item.get('id', 0)))
+        except Exception:
+            pass
+    new_id = current_max_id + 1
+
+    user = req.get('user', 'guest')
     new_item = {
+        "id": new_id,
+        "user": user,
         "date": req['date'],
         "amount": amount_val,
         "memo": req['memo'],
         "main_category": req['main_category'],
         "sub_category": req['sub_category']
     }
-    data = load_data()
     data.append(new_item)
     save_data(data)
     return jsonify({"success": True, "item": new_item})
 
 
+@app.route('/api/delete', methods=['POST'])
+def api_delete():
+    req = request.get_json()
+    if not req or 'id' not in req:
+        return jsonify({"success": False, "message": "ID가 필요합니다."}), 400
+
+    try:
+        target_id = int(req['id'])
+    except Exception:
+        return jsonify({"success": False, "message": "잘못된 ID입니다."}), 400
+
+    user = req.get('user')
+
+    data = load_data()
+    new_data = []
+    deleted = False
+    for item in data:
+        item_id = None
+        try:
+            item_id = int(item.get('id', 0))
+        except Exception:
+            item_id = 0
+
+        if (not deleted
+            and item_id == target_id
+            and (user is None or item.get('user', 'guest') == user)):
+            deleted = True
+            continue
+        new_data.append(item)
+
+    if not deleted:
+        return jsonify({"success": False, "message": "항목을 찾을 수 없습니다."}), 404
+
+    save_data(new_data)
+    return jsonify({"success": True})
+
+
 @app.route('/api/download', methods=['GET'])
 def api_download():
     data = load_data()
+    user = request.args.get('user')
+    if user:
+        data = [d for d in data if d.get('user', 'guest') == user]
+
     if not data:
         df = pd.DataFrame(columns=["날짜", "금액", "내용", "대분류", "소분류"])
     else:
@@ -708,6 +981,11 @@ def api_download():
             "main_category": "대분류",
             "sub_category": "소분류"
         })
+        # user, id 컬럼은 엑셀에서는 굳이 안 보여줘도 되면 드롭
+        drop_cols = [c for c in ["user", "id"] if c in df.columns]
+        if drop_cols:
+            df = df.drop(columns=drop_cols)
+
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
     df.to_excel(tmp.name, index=False)
     return send_file(tmp.name, as_attachment=True, download_name="가계부.xlsx")
