@@ -1,0 +1,718 @@
+from flask import Flask, request, jsonify, send_file
+import os, json, tempfile
+import pandas as pd
+
+app = Flask(__name__)
+
+DATA_FILE = 'data.json'
+
+
+# ------------------ 데이터 로드 & 저장 ------------------
+def load_data():
+    if not os.path.exists(DATA_FILE):
+        return []
+    try:
+        with open(DATA_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            if isinstance(data, list):
+                return data
+            return []
+    except Exception:
+        return []
+
+
+def save_data(data_list):
+    with open(DATA_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data_list, f, ensure_ascii=False, indent=2)
+
+
+# ------------------ HTML 페이지 ------------------
+@app.route('/')
+def index():
+    return '''<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>가계부 시스템</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #f5f7fb;
+            --card-bg: #ffffff;
+            --accent: #4f46e5;
+            --accent-light: #eef2ff;
+            --border: #e2e8f0;
+            --text-main: #111827;
+            --text-sub: #6b7280;
+            --danger: #ef4444;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+            background-color: var(--bg); color: var(--text-main);
+        }
+        .wrapper { max-width: 1000px; margin: 24px auto; padding: 0 16px 32px; }
+        header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 16px; gap: 8px;
+        }
+        header h1 { font-size: 1.4rem; margin: 0; display: flex; align-items: center; gap: 8px; }
+        header h1 span.logo-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--accent); display: inline-block; }
+        header .subtitle { margin: 0; font-size: 0.85rem; color: var(--text-sub); }
+        .card {
+            background-color: var(--card-bg); border-radius: 16px; padding: 16px 20px 20px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06); border: 1px solid var(--border); margin-bottom: 16px;
+        }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .card-header h2 { margin: 0; font-size: 1rem; }
+        .btn {
+            border: none; border-radius: 999px; padding: 8px 14px; font-size: 0.85rem; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px; background-color: var(--accent); color: #fff;
+        }
+        .btn.secondary { background-color: var(--accent-light); color: var(--accent); }
+        .btn:active { transform: translateY(1px); }
+        form {
+            display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px 12px; align-items: flex-end;
+        }
+        .form-group { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; }
+        label { color: var(--text-sub); }
+        input[type="date"], input[type="number"], input[type="text"], select, input[type="month"] {
+            border-radius: 10px; border: 1px solid var(--border); padding: 7px 9px; font-size: 0.9rem; width: 100%; outline: none;
+        }
+        input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-light); }
+        .form-actions { text-align: right; }
+        .error-message { color: var(--danger); font-size: 0.8rem; margin-top: 4px; }
+        .summary-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 6px; font-size: 0.85rem; color: var(--text-sub);
+        }
+        .summary-bar strong { color: var(--text-main); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        thead { background-color: #f9fafb; }
+        th, td {
+            padding: 8px 6px; border-bottom: 1px solid var(--border);
+            text-align: left; white-space: nowrap;
+        }
+        th:last-child, td:last-child { width: 40%; white-space: normal; }
+        th { font-weight: 600; color: var(--text-sub); }
+        tbody tr:hover { background-color: #f3f4ff; }
+        .amount-income { color: #16a34a; font-weight: 600; }
+        .amount-expense { color: #dc2626; font-weight: 600; }
+        .no-data { text-align: center; padding: 14px 0; color: var(--text-sub); }
+
+        @media (max-width: 760px) {
+            form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 520px) {
+            form { grid-template-columns: 1fr; }
+            header { flex-direction: column; align-items: flex-start; }
+        }
+
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+        .filter-row .filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .filter-row .filter-hint {
+            margin: 0;
+            color: var(--text-sub);
+            font-size: 0.8rem;
+        }
+
+        .chart-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .chart-box {
+            flex: 1 1 260px;
+        }
+        .chart-title {
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            color: var(--text-sub);
+        }
+        canvas {
+            max-width: 100%;
+            max-height: 280px;
+        }
+        .chart-empty-text {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            text-align: center;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <header>
+        <div>
+            <h1><span class="logo-dot"></span> 가계부</h1>
+            <p class="subtitle">수입·지출을 간단하게 기록하고 엑셀로 관리하세요.</p>
+        </div>
+        <button class="btn secondary" id="btn-download-top">⬇️ 엑셀 다운로드</button>
+    </header>
+
+    <!-- 월별 필터 카드 -->
+    <section class="card">
+        <div class="card-header">
+            <h2>조회 기간</h2>
+        </div>
+        <div class="filter-row">
+            <div class="filter-field">
+                <label for="month-filter">월 선택</label>
+                <input type="month" id="month-filter">
+            </div>
+            <div class="filter-field">
+                <label>&nbsp;</label>
+                <button class="btn secondary" id="btn-clear-filter">전체 보기</button>
+            </div>
+            <p class="filter-hint">선택한 월 기준으로 목록, 합계, 그래프가 모두 필터링됩니다. (미선택 시 전체)</p>
+        </div>
+    </section>
+
+    <!-- 입력 카드 -->
+    <section class="card">
+        <div class="card-header">
+            <h2>내역 입력</h2>
+        </div>
+        <form id="account-form">
+            <div class="form-group">
+                <label for="date">날짜</label>
+                <input type="date" id="date" required>
+            </div>
+            <div class="form-group">
+                <label for="amount">금액</label>
+                <input type="number" id="amount" min="0" placeholder="예: 12000" required>
+            </div>
+            <div class="form-group">
+                <label for="main-category">대분류</label>
+                <select id="main-category" required>
+                    <option value="">선택하세요</option>
+                    <option value="수입">수입</option>
+                    <option value="지출">지출</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sub-category">소분류</label>
+                <select id="sub-category" required>
+                    <option value="">대분류를 먼저 선택하세요</option>
+                </select>
+            </div>
+            <div class="form-group" style="grid-column: span 3;">
+                <label for="memo">내용 (메모)</label>
+                <input type="text" id="memo" placeholder="예: 점심 식사, 월급, 교통비 등" required>
+            </div>
+            <div class="form-group form-actions">
+                <button type="submit" class="btn">➕ 내역 추가</button>
+                <div class="error-message" id="form-error" style="display:none;"></div>
+            </div>
+        </form>
+    </section>
+
+    <!-- 리스트 카드 -->
+    <section class="card">
+        <div class="card-header">
+            <h2>내역 목록</h2>
+            <button class="btn secondary" id="btn-download-bottom">
+                ⬇️ 엑셀 다운로드
+            </button>
+        </div>
+
+        <div class="summary-bar">
+            <div>총 건수: <strong id="summary-count">0</strong> 건</div>
+            <div>
+                수입 합계: <strong id="summary-income">0</strong> 원 ·
+                지출 합계: <strong id="summary-expense">0</strong> 원
+            </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                <tr>
+                    <th>날짜</th>
+                    <th>대분류</th>
+                    <th>소분류</th>
+                    <th>금액</th>
+                    <th>내용</th>
+                </tr>
+                </thead>
+                <tbody id="table-body">
+                <tr class="no-data-row">
+                    <td colspan="5" class="no-data">아직 저장된 내역이 없습니다.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- 그래프 카드 -->
+    <section class="card">
+        <div class="card-header">
+            <h2>그래프 요약</h2>
+        </div>
+        <div class="chart-container">
+            <div class="chart-box">
+                <div class="chart-title">대분류 비율 (수입 vs 지출)</div>
+                <canvas id="main-pie-chart"></canvas>
+                <div id="main-chart-empty" class="chart-empty-text" style="display:none;">
+                    수입 또는 지출 내역이 없습니다.
+                </div>
+            </div>
+            <div class="chart-box">
+                <div class="chart-title">지출 비율 (소분류 기준)</div>
+                <canvas id="expense-pie-chart"></canvas>
+                <div id="expense-chart-empty" class="chart-empty-text" style="display:none;">
+                    지출 내역이 없습니다. 지출을 입력하면 소분류 기준 원형 그래프가 표시됩니다.
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    const categories = {
+        "수입": ["월급", "용돈", "보너스", "이자소득", "기타수입"],
+        "지출": ["식비", "교통", "주거", "통신", "쇼핑", "문화생활", "교육", "의료/건강", "기타지출"]
+    };
+
+    const form = document.getElementById('account-form');
+    const dateInput = document.getElementById('date');
+    const amountInput = document.getElementById('amount');
+    const mainSelect = document.getElementById('main-category');
+    const subSelect = document.getElementById('sub-category');
+    const memoInput = document.getElementById('memo');
+    const errorBox = document.getElementById('form-error');
+
+    const tbody = document.getElementById('table-body');
+    const summaryCount = document.getElementById('summary-count');
+    const summaryIncome = document.getElementById('summary-income');
+    const summaryExpense = document.getElementById('summary-expense');
+
+    const btnDownloadTop = document.getElementById('btn-download-top');
+    const btnDownloadBottom = document.getElementById('btn-download-bottom');
+
+    const monthFilter = document.getElementById('month-filter');
+    const btnClearFilter = document.getElementById('btn-clear-filter');
+
+    const mainChartCanvas = document.getElementById('main-pie-chart');
+    const mainChartEmptyText = document.getElementById('main-chart-empty');
+    const expenseChartCanvas = document.getElementById('expense-pie-chart');
+    const expenseChartEmptyText = document.getElementById('expense-chart-empty');
+
+    let allItems = [];
+    let mainPieChart = null;
+    let expensePieChart = null;
+
+    function setToday() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    function updateSubCategories() {
+        const mainValue = mainSelect.value;
+        subSelect.innerHTML = "";
+
+        if (!mainValue || !categories[mainValue]) {
+            const opt = document.createElement('option');
+            opt.value = "";
+            opt.textContent = "대분류를 먼저 선택하세요";
+            subSelect.appendChild(opt);
+            return;
+        }
+
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = "";
+        defaultOpt.textContent = "소분류 선택";
+        subSelect.appendChild(defaultOpt);
+
+        categories[mainValue].forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            subSelect.appendChild(opt);
+        });
+    }
+
+    function clearError() {
+        errorBox.style.display = 'none';
+        errorBox.textContent = '';
+    }
+
+    function showError(msg) {
+        errorBox.textContent = msg;
+        errorBox.style.display = 'block';
+    }
+
+    function formatNumber(num) {
+        const n = Number(num) || 0;
+        return n.toLocaleString('ko-KR');
+    }
+
+    function updateMainPieChart(items) {
+        const income = items
+            .filter(it => it.main_category === '수입')
+            .reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
+        const expense = items
+            .filter(it => it.main_category === '지출')
+            .reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
+
+        if (income === 0 && expense === 0) {
+            if (mainPieChart) {
+                mainPieChart.destroy();
+                mainPieChart = null;
+            }
+            mainChartCanvas.style.display = 'none';
+            mainChartEmptyText.style.display = 'block';
+            return;
+        }
+
+        mainChartCanvas.style.display = 'block';
+        mainChartEmptyText.style.display = 'none';
+
+        if (mainPieChart) {
+            mainPieChart.destroy();
+        }
+
+        const ctx = mainChartCanvas.getContext('2d');
+        mainPieChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['수입', '지출'],
+                datasets: [{
+                    data: [income, expense],
+                    backgroundColor: ['#22c55e', '#ef4444']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                return `${label}: ${value.toLocaleString('ko-KR')}원`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateExpensePieChart(items) {
+        const expenses = items.filter(it => it.main_category === '지출');
+
+        if (!expenses.length) {
+            if (expensePieChart) {
+                expensePieChart.destroy();
+                expensePieChart = null;
+            }
+            expenseChartCanvas.style.display = 'none';
+            expenseChartEmptyText.style.display = 'block';
+            return;
+        }
+
+        const sums = {};
+        expenses.forEach(it => {
+            const key = it.sub_category || '기타';
+            const amt = Number(it.amount) || 0;
+            sums[key] = (sums[key] || 0) + amt;
+        });
+
+        const labels = Object.keys(sums);
+        const data = labels.map(k => sums[k]);
+
+        expenseChartCanvas.style.display = 'block';
+        expenseChartEmptyText.style.display = 'none';
+
+        if (expensePieChart) {
+            expensePieChart.destroy();
+        }
+
+        const ctx = expenseChartCanvas.getContext('2d');
+        expensePieChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: [
+                        '#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6',
+                        '#0ea5e9', '#6366f1', '#8b5cf6', '#ec4899', '#6b7280'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                return `${label}: ${value.toLocaleString('ko-KR')}원`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateCharts(items) {
+        updateMainPieChart(items);
+        updateExpensePieChart(items);
+    }
+
+    function renderTable(items) {
+        tbody.innerHTML = "";
+
+        if (!items || items.length === 0) {
+            const tr = document.createElement('tr');
+            tr.classList.add('no-data-row');
+            const td = document.createElement('td');
+            td.colSpan = 5;
+            td.className = 'no-data';
+            td.textContent = '아직 저장된 내역이 없습니다.';
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+
+            summaryCount.textContent = '0';
+            summaryIncome.textContent = '0';
+            summaryExpense.textContent = '0';
+
+            updateCharts([]);
+            return;
+        }
+
+        let incomeSum = 0;
+        let expenseSum = 0;
+
+        items.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+
+        items.forEach(item => {
+            const tr = document.createElement('tr');
+
+            const tdDate = document.createElement('td');
+            tdDate.textContent = item.date || '';
+            tr.appendChild(tdDate);
+
+            const tdMain = document.createElement('td');
+            tdMain.textContent = item.main_category || '';
+            tr.appendChild(tdMain);
+
+            const tdSub = document.createElement('td');
+            tdSub.textContent = item.sub_category || '';
+            tr.appendChild(tdSub);
+
+            const tdAmount = document.createElement('td');
+            const amount = Number(item.amount) || 0;
+
+            if (item.main_category === '수입') {
+                incomeSum += amount;
+                tdAmount.classList.add('amount-income');
+                tdAmount.textContent = '+' + formatNumber(amount);
+            } else if (item.main_category === '지출') {
+                expenseSum += amount;
+                tdAmount.classList.add('amount-expense');
+                tdAmount.textContent = '-' + formatNumber(amount);
+            } else {
+                tdAmount.textContent = formatNumber(amount);
+            }
+            tr.appendChild(tdAmount);
+
+            const tdMemo = document.createElement('td');
+            tdMemo.textContent = item.memo || '';
+            tr.appendChild(tdMemo);
+
+            tbody.appendChild(tr);
+        });
+
+        summaryCount.textContent = String(items.length);
+        summaryIncome.textContent = formatNumber(incomeSum);
+        summaryExpense.textContent = formatNumber(expenseSum);
+
+        updateCharts(items);
+    }
+
+    function applyFilterAndRender() {
+        let items = allItems || [];
+        const month = monthFilter.value; // YYYY-MM
+
+        if (month) {
+            items = items.filter(it => (it.date || '').startsWith(month));
+        }
+
+        renderTable(items);
+    }
+
+    async function fetchList() {
+        try {
+            const res = await fetch('/api/list');
+            const data = await res.json();
+            if (data.success) {
+                allItems = data.items || [];
+            } else {
+                allItems = [];
+            }
+        } catch (e) {
+            console.error(e);
+            allItems = [];
+        }
+        applyFilterAndRender();
+    }
+
+    async function handleSubmit(event) {
+        event.preventDefault();
+        clearError();
+
+        const date = dateInput.value;
+        const amount = amountInput.value;
+        const mainCategory = mainSelect.value;
+        const subCategory = subSelect.value;
+        const memo = memoInput.value.trim();
+
+        if (!date || !amount || !mainCategory || !subCategory || !memo) {
+            showError("모든 필드를 입력해 주세요.");
+            return;
+        }
+
+        if (isNaN(Number(amount))) {
+            showError("금액은 숫자로 입력해 주세요.");
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8'
+                },
+                body: JSON.stringify({
+                    date: date,
+                    amount: amount,
+                    main_category: mainCategory,
+                    sub_category: subCategory,
+                    memo: memo
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                showError(data.message || "저장 중 오류가 발생했습니다.");
+                return;
+            }
+
+            setToday();
+            amountInput.value = '';
+            memoInput.value = '';
+            mainSelect.value = '';
+            updateSubCategories();
+            clearError();
+
+            await fetchList();
+        } catch (e) {
+            console.error(e);
+            showError("서버와 통신 중 오류가 발생했습니다.");
+        }
+    }
+
+    function downloadExcel() {
+        window.location.href = '/api/download';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setToday();
+        updateSubCategories();
+        fetchList();
+
+        mainSelect.addEventListener('change', updateSubCategories);
+        form.addEventListener('submit', handleSubmit);
+
+        btnDownloadTop.addEventListener('click', downloadExcel);
+        btnDownloadBottom.addEventListener('click', downloadExcel);
+
+        monthFilter.addEventListener('change', applyFilterAndRender);
+        btnClearFilter.addEventListener('click', () => {
+            monthFilter.value = '';
+            applyFilterAndRender();
+        });
+    });
+</script>
+</body>
+</html>'''
+
+
+# ------------------ API ------------------
+@app.route('/api/list', methods=['GET'])
+def api_list():
+    data = load_data()
+    return jsonify({"success": True, "items": data})
+
+
+@app.route('/api/add', methods=['POST'])
+def api_add():
+    req = request.get_json()
+    required = ['date', 'amount', 'memo', 'main_category', 'sub_category']
+    if not req or any(f not in req or req[f] == "" for f in required):
+        return jsonify({"success": False, "message": "필수 항목이 누락되었습니다."}), 400
+    try:
+        amount_val = float(req['amount'])
+    except ValueError:
+        return jsonify({"success": False, "message": "금액은 숫자여야 합니다."}), 400
+
+    new_item = {
+        "date": req['date'],
+        "amount": amount_val,
+        "memo": req['memo'],
+        "main_category": req['main_category'],
+        "sub_category": req['sub_category']
+    }
+    data = load_data()
+    data.append(new_item)
+    save_data(data)
+    return jsonify({"success": True, "item": new_item})
+
+
+@app.route('/api/download', methods=['GET'])
+def api_download():
+    data = load_data()
+    if not data:
+        df = pd.DataFrame(columns=["날짜", "금액", "내용", "대분류", "소분류"])
+    else:
+        df = pd.DataFrame(data).rename(columns={
+            "date": "날짜",
+            "amount": "금액",
+            "memo": "내용",
+            "main_category": "대분류",
+            "sub_category": "소분류"
+        })
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
+    df.to_excel(tmp.name, index=False)
+    return send_file(tmp.name, as_attachment=True, download_name="가계부.xlsx")
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
