@@ -9,9 +9,10 @@ import pandas as pd
 app = Flask(__name__)
 
 DATA_FILE = 'data.json'
+USERS_FILE = 'users.json'
 
 
-# ------------------ 데이터 로드 & 저장 ------------------
+# ------------------ 공용 JSON 로드/저장 ------------------
 def save_data(data_list):
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(data_list, f, ensure_ascii=False, indent=2)
@@ -62,7 +63,50 @@ def get_next_id(data):
     return current_max_id + 1
 
 
-# ------------------ CSV 헬퍼 함수 (일반 CSV용) ------------------
+def load_users():
+    """users.json 로드 (dict: name -> {password, is_admin})"""
+    if not os.path.exists(USERS_FILE):
+        return {}
+    try:
+        with open(USERS_FILE, 'r', encoding='utf-8') as f:
+            raw = json.load(f)
+            if not isinstance(raw, dict):
+                return {}
+        users = {}
+        for name, info in raw.items():
+            if isinstance(info, str):
+                users[name] = {"password": info, "is_admin": False}
+            elif isinstance(info, dict):
+                pwd = info.get("password", "")
+                is_admin = bool(info.get("is_admin", False))
+                users[name] = {"password": pwd, "is_admin": is_admin}
+        return users
+    except Exception:
+        return {}
+
+
+def save_users(users: dict):
+    with open(USERS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(users, f, ensure_ascii=False, indent=2)
+
+
+def ensure_admin_user():
+    """
+    내부적으로는 'kjyadmin' 이라는 관리자 계정을 유지.
+    비밀번호 187904, is_admin=True
+    (화면에서는 '김준영 + 187904' 로 관리자로 로그인하게 만들 것)
+    """
+    users = load_users()
+    admin_info = users.get("kjyadmin")
+    if not admin_info or admin_info.get("password") != "187904" or not admin_info.get("is_admin", False):
+        users["kjyadmin"] = {"password": "187904", "is_admin": True}
+        save_users(users)
+
+
+ensure_admin_user()
+
+
+# ------------------ CSV 파싱 유틸 (국민은행 + 일반 CSV) ------------------
 def _find_col(possible_names, columns):
     for name in possible_names:
         if name in columns:
@@ -92,12 +136,9 @@ def _parse_amount(value):
         return None
 
 
-# ------------------ KB국민 ①: 예전 4줄짜리 특수 CSV 파서 ------------------
 def parse_kb_kukmin_block(raw_bytes):
     """
-    (예전 형식)
-    날짜줄 / 금액줄 / 시간줄 / 공백줄 ... 형태의 CSV.
-    인식 못 하면 None 반환.
+    국민은행 일부 양식(블록 형식) 자동 파싱 시도
     """
     text = raw_bytes.decode('utf-8', errors='ignore')
     lines = [ln.strip().strip('"') for ln in text.splitlines()]
@@ -143,7 +184,6 @@ def parse_kb_kukmin_block(raw_bytes):
         prefix = re.split(r'\d', info_line, 1)[0].strip()
 
         desc_parts = []
-
         if base_memo:
             desc_parts.append(base_memo)
         if prefix and prefix not in base_memo:
@@ -220,17 +260,9 @@ def parse_kb_kukmin_block(raw_bytes):
     return items
 
 
-# ------------------ KB국민 ②: 지금 스샷처럼 한 줄짜리 CSV 파서 ------------------
 def parse_kb_kukmin_row(raw_bytes):
     """
-    (현재 형식)
-    예:
-    2025.11.05 18:44:18 KB 3,800 0 263,665
-    FBS
-    2025.11.05 16:39:36 10,000 0 267,465
-    ...
-    이런 식의 '날짜 시간 + 금액들' 한 줄짜리 형식.
-    인식 못 하면 None 반환.
+    국민은행 '행 단위' 내역 CSV 파싱 시도
     """
     text = raw_bytes.decode('utf-8', errors='ignore')
     lines = [ln.strip().strip('"') for ln in text.splitlines()]
@@ -242,18 +274,14 @@ def parse_kb_kukmin_row(raw_bytes):
         m = dt_pattern.match(line)
         if not m:
             continue
-
-        date_raw = m.group(1)  # 2025.11.05
+        date_raw = m.group(1)
         date_str = date_raw.replace('.', '-')
-
         tail = line[m.end():].strip()
+
         nums = [int(n.replace(',', '')) for n in re.findall(r'[\d,]+', tail)]
         if len(nums) < 2:
             continue
-
-        # 보통 [금액, 0, 잔액] 또는 [0, 금액, 잔액]
-        amt1 = nums[0]
-        amt2 = nums[1]
+        amt1, amt2 = nums[0], nums[1]
 
         if amt1 != 0 and amt2 == 0:
             amount = amt1
@@ -262,7 +290,6 @@ def parse_kb_kukmin_row(raw_bytes):
             amount = amt2
             main_category = '수입'
         else:
-            # 둘 다 있으면 큰 쪽 기준
             if abs(amt1) >= abs(amt2):
                 amount = amt1
                 main_category = '지출'
@@ -270,7 +297,6 @@ def parse_kb_kukmin_row(raw_bytes):
                 amount = amt2
                 main_category = '수입'
 
-        # 메모 만들기: 이전 줄 + 현재 줄에서 숫자 앞 텍스트
         prev_line = lines[idx - 1].strip() if idx > 0 else ''
         seg = re.split(r'[\d,]', tail, 1)[0].strip()
 
@@ -280,7 +306,6 @@ def parse_kb_kukmin_row(raw_bytes):
         if seg:
             parts.append(seg)
 
-        # 중복 제거
         seen = set()
         parts_clean = []
         for p in parts:
@@ -289,8 +314,8 @@ def parse_kb_kukmin_row(raw_bytes):
                 parts_clean.append(p)
 
         memo = " / ".join(parts_clean) if parts_clean else "KB 거래"
-
         sub_category = "기타수입" if main_category == "수입" else "기타지출"
+
         items.append({
             "date": date_str,
             "amount": amount,
@@ -304,13 +329,90 @@ def parse_kb_kukmin_row(raw_bytes):
     return items
 
 
-# ------------------ HTML 페이지 ------------------
+# ------------------ HTML ------------------
 @app.route('/')
 def index():
     return render_template('index.html')
 
 
-# ------------------ API ------------------
+# ------------------ 사용자 로그인 / 회원 관리 ------------------
+@app.route('/api/user_login', methods=['POST'])
+def api_user_login():
+    """
+    - 기존 로직 유지 + 이 조건 추가:
+      이름이 '김준영' 이고 비밀번호가 '187904'면 관리자 로그인으로 처리.
+      (users.json에 있는 'kjyadmin' 내부 관리자 계정과 연결된 개념)
+    """
+    req = request.get_json() or {}
+    user = (req.get('user') or '').strip()
+    password = req.get('password') or ''
+
+    if not user:
+        return jsonify({"success": False, "message": "user가 필요합니다."}), 400
+
+    # ✅ 여기서 "김준영 + 187904" 조합이면 무조건 관리자
+    if user == '김준영' and password == '187904':
+        return jsonify({"success": True, "is_admin": True, "is_new": False})
+
+    # guest는 비번 없이 (혹은 아무 비번) 그냥 사용 가능하다고 가정
+    if user == 'guest':
+        return jsonify({"success": True, "is_admin": False, "is_new": False})
+
+    users = load_users()
+    info = users.get(user)
+
+    # 등록되지 않은 사용자 → 프론트에서 "새로 만들까요?" 물어보고 /api/user_register 호출
+    if not info:
+        return jsonify({
+            "success": False,
+            "need_register": True,
+            "message": "등록되지 않은 사용자입니다."
+        })
+
+    if info.get("password") != password:
+        return jsonify({"success": False, "message": "비밀번호가 올바르지 않습니다."})
+
+    return jsonify({"success": True, "is_admin": bool(info.get("is_admin")), "is_new": False})
+
+
+@app.route('/api/user_register', methods=['POST'])
+def api_user_register():
+    """새 일반 사용자 등록 (관리자X). 'guest', 'kjyadmin' 이름은 사용 불가"""
+    req = request.get_json() or {}
+    user = (req.get('user') or '').strip()
+    password = req.get('password') or ''
+
+    if not user or not password:
+        return jsonify({"success": False, "message": "user와 password가 필요합니다."}), 400
+
+    if user in ('guest', 'kjyadmin'):
+        return jsonify({"success": False, "message": "해당 이름은 사용할 수 없습니다."}), 400
+
+    users = load_users()
+    if user in users:
+        return jsonify({"success": False, "message": "이미 존재하는 사용자입니다."}), 400
+
+    users[user] = {"password": password, "is_admin": False}
+    save_users(users)
+    return jsonify({"success": True})
+
+
+@app.route('/api/users_for_admin', methods=['GET'])
+def api_users_for_admin():
+    """관리자 화면에서 조회할 수 있는 사용자 목록"""
+    users = load_users()
+    data = load_data()
+    names = set(users.keys())
+    for item in data:
+        names.add(item.get('user', 'guest'))
+    # 혹시 누락되었을 수 있으니 관리자 계정명도 포함
+    if 'kjyadmin' in names:
+        names.add('kjyadmin')
+    user_list = sorted(names)
+    return jsonify({"success": True, "users": user_list})
+
+
+# ------------------ 가계부 CRUD ------------------
 @app.route('/api/list', methods=['GET'])
 def api_list():
     data = load_data()
@@ -326,6 +428,7 @@ def api_add():
     required = ['date', 'amount', 'memo', 'main_category', 'sub_category']
     if not req or any(f not in req or req[f] == "" for f in required):
         return jsonify({"success": False, "message": "필수 항목이 누락되었습니다."}), 400
+
     try:
         amount_val = float(str(req['amount']).replace(',', '').strip())
     except ValueError:
@@ -333,8 +436,8 @@ def api_add():
 
     data = load_data()
     new_id = get_next_id(data)
-
     user = req.get('user', 'guest')
+
     new_item = {
         "id": new_id,
         "user": user,
@@ -361,12 +464,11 @@ def api_delete():
         return jsonify({"success": False, "message": "잘못된 ID입니다."}), 400
 
     user = req.get('user')
-
     data = load_data()
     new_data = []
     deleted = False
+
     for item in data:
-        item_id = None
         try:
             item_id = int(item.get('id', 0))
         except Exception:
@@ -407,10 +509,18 @@ def api_delete_user():
         return jsonify({"success": False, "message": "user가 필요합니다."}), 400
 
     user = req.get('user')
+    if user == 'kjyadmin':
+        return jsonify({"success": False, "message": "관리자 계정은 삭제할 수 없습니다."}), 400
+
     data = load_data()
     new_data = [d for d in data if d.get('user', 'guest') != user]
-
     save_data(new_data)
+
+    users = load_users()
+    if user in users:
+        users.pop(user)
+        save_users(users)
+
     return jsonify({"success": True})
 
 
@@ -440,15 +550,9 @@ def api_download():
     return send_file(tmp.name, as_attachment=True, download_name="가계부.xlsx")
 
 
-# ------------------ CSV IMPORT (KB 2종 + 일반 CSV) ------------------
+# ------------------ CSV IMPORT ------------------
 @app.route('/api/import', methods=['POST'])
 def api_import():
-    """
-    CSV 파일 업로드 후 여러 건 한 번에 추가하는 엔드포인트.
-    1) KB국민은행 한 줄짜리 형식(parse_kb_kukmin_row)
-    2) KB국민은행 4줄짜리 옛 형식(parse_kb_kukmin_block)
-    3) 그 외 일반 표 형식 CSV (pandas)
-    """
     if 'file' not in request.files:
         return jsonify({"success": False, "message": "CSV 파일이 전송되지 않았습니다."}), 400
 
@@ -462,13 +566,12 @@ def api_import():
 
     raw = file.read()
 
-    # 1️⃣ 최신 KB 한 줄짜리 CSV 먼저 시도
+    # 1) 국민은행 행 단위 포맷 시도
     kb_row_items = parse_kb_kukmin_row(raw)
     if kb_row_items is not None:
         data = load_data()
         next_id = get_next_id(data)
         imported_count = 0
-
         for item in kb_row_items:
             new_item = {
                 "id": next_id,
@@ -482,23 +585,17 @@ def api_import():
             data.append(new_item)
             next_id += 1
             imported_count += 1
-
         if imported_count == 0:
-            return jsonify({
-                "success": False,
-                "message": "유효한 내역을 찾지 못했습니다. CSV 내용을 확인해 주세요."
-            }), 400
-
+            return jsonify({"success": False, "message": "유효한 내역을 찾지 못했습니다. CSV 내용을 확인해 주세요."}), 400
         save_data(data)
         return jsonify({"success": True, "imported": imported_count})
 
-    # 2️⃣ 예전 KB 4줄짜리 형식 시도
+    # 2) 국민은행 블록 포맷 시도
     kb_block_items = parse_kb_kukmin_block(raw)
     if kb_block_items is not None:
         data = load_data()
         next_id = get_next_id(data)
         imported_count = 0
-
         for item in kb_block_items:
             new_item = {
                 "id": next_id,
@@ -512,17 +609,12 @@ def api_import():
             data.append(new_item)
             next_id += 1
             imported_count += 1
-
         if imported_count == 0:
-            return jsonify({
-                "success": False,
-                "message": "유효한 내역을 찾지 못했습니다. CSV 내용을 확인해 주세요."
-            }), 400
-
+            return jsonify({"success": False, "message": "유효한 내역을 찾지 못했습니다. CSV 내용을 확인해 주세요."}), 400
         save_data(data)
         return jsonify({"success": True, "imported": imported_count})
 
-    # 3️⃣ KB 포맷이 아니면 → 일반 표 형태 CSV 처리 (pandas)
+    # 3) 일반 CSV 로딩
     try:
         df = pd.read_csv(io.BytesIO(raw))
     except Exception:
@@ -535,17 +627,14 @@ def api_import():
         return jsonify({"success": False, "message": "CSV에 데이터가 없습니다."}), 400
 
     cols = list(df.columns)
-
     date_col = _find_col(
         ['날짜', '일자', '거래일자', '거래일', '거래일시', '일시', 'date', 'Date'],
         cols
     )
-
     amount_col = _find_col(
         ['금액', '거래금액', '금 액', '거래금액(원)', '금액(원)', 'amount', 'Amount'],
         cols
     )
-
     credit_col = _find_col(
         ['입금', '입금액', '입금(원)', '입금금액', '입금금액(원)'],
         cols
@@ -554,7 +643,6 @@ def api_import():
         ['출금', '출금액', '출금(원)', '출금금액', '출금금액(원)'],
         cols
     )
-
     memo_col = _find_col(['내용', '적요', '메모', '설명', 'memo', 'Memo'], cols)
     main_col = _find_col(['대분류', '구분', '수입지출', '유형', 'type', 'Type'], cols)
     sub_col = _find_col(['소분류', '카테고리', '분류', 'category', 'Category'], cols)
@@ -590,7 +678,6 @@ def api_import():
             amount_val = _parse_amount(row.get(amount_col))
             if amount_val is None:
                 continue
-
             if main_col:
                 main_raw = row.get(main_col)
                 main_category = _normalize_main_category(main_raw, default_main)
@@ -599,13 +686,10 @@ def api_import():
         else:
             credit = _parse_amount(row.get(credit_col)) if credit_col else None
             debit = _parse_amount(row.get(debit_col)) if debit_col else None
-
             credit = credit or 0
             debit = debit or 0
-
             if credit == 0 and debit == 0:
                 continue
-
             if credit > 0 and debit == 0:
                 amount_val = credit
                 main_category = '수입'
