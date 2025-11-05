@@ -100,6 +100,7 @@ def index():
         }
         .header-buttons {
             display: flex;
+            flex-wrap: wrap;
             gap: 6px;
         }
 
@@ -114,6 +115,7 @@ def index():
             display: inline-flex; align-items: center; gap: 6px; background-color: var(--accent); color: #fff;
         }
         .btn.secondary { background-color: var(--accent-light); color: var(--accent); }
+        .btn.danger { background-color: var(--danger); color: #fff; }
         .btn:active { transform: translateY(1px); }
         form {
             display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -241,6 +243,7 @@ def index():
             </div>
             <div class="header-buttons">
                 <button class="btn secondary" id="btn-change-user">사용자 변경</button>
+                <button class="btn danger" id="btn-delete-user">사용자 삭제</button>
                 <button class="btn secondary" id="btn-download-top">⬇️ 엑셀 다운로드</button>
             </div>
         </div>
@@ -326,9 +329,12 @@ def index():
     <section class="card">
         <div class="card-header">
             <h2>내역 목록</h2>
-            <button class="btn secondary" id="btn-download-bottom">
-                ⬇️ 엑셀 다운로드
-            </button>
+            <div class="header-buttons">
+                <button class="btn secondary" id="btn-clear-entries">내역 전체 삭제</button>
+                <button class="btn secondary" id="btn-download-bottom">
+                    ⬇️ 엑셀 다운로드
+                </button>
+            </div>
         </div>
 
         <div class="summary-bar">
@@ -418,6 +424,8 @@ def index():
 
     const currentUserLabel = document.getElementById('current-user-label');
     const btnChangeUser = document.getElementById('btn-change-user');
+    const btnDeleteUser = document.getElementById('btn-delete-user');
+    const btnClearEntries = document.getElementById('btn-clear-entries');
 
     const monthSummaryLabel = document.getElementById('month-summary-label');
     const monthIncomeEl = document.getElementById('month-income');
@@ -832,6 +840,60 @@ def index():
         }
     }
 
+    async function clearEntriesForUser() {
+        if (!confirm(`현재 사용자(${currentUser})의 모든 내역을 삭제할까요?`)) return;
+        try {
+            const res = await fetch('/api/clear_entries', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8'
+                },
+                body: JSON.stringify({ user: currentUser })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                alert(data.message || '내역 전체 삭제 중 오류가 발생했습니다.');
+                return;
+            }
+            await fetchList();
+        } catch (e) {
+            console.error(e);
+            alert('서버와 통신 중 오류가 발생했습니다.');
+        }
+    }
+
+    async function deleteCurrentUser() {
+        if (currentUser === 'guest') {
+            if (!confirm('guest 사용자의 모든 내역을 삭제하고 초기화할까요?')) return;
+        } else {
+            if (!confirm(`사용자 "${currentUser}"와 그 사용자의 모든 내역을 삭제합니다. 계속할까요?`)) return;
+        }
+
+        try {
+            const res = await fetch('/api/delete_user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8'
+                },
+                body: JSON.stringify({ user: currentUser })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                alert(data.message || '사용자 삭제 중 오류가 발생했습니다.');
+                return;
+            }
+
+            // localStorage에서 사용자 제거 후 guest로 돌아가기
+            localStorage.removeItem('accountBookUser');
+            currentUser = 'guest';
+            currentUserLabel.textContent = currentUser;
+            await fetchList();
+        } catch (e) {
+            console.error(e);
+            alert('서버와 통신 중 오류가 발생했습니다.');
+        }
+    }
+
     function initUser() {
         const saved = localStorage.getItem('accountBookUser');
         currentUser = saved && saved.trim() ? saved.trim() : 'guest';
@@ -866,6 +928,9 @@ def index():
             currentUserLabel.textContent = currentUser;
             fetchList();
         });
+
+        btnDeleteUser.addEventListener('click', deleteCurrentUser);
+        btnClearEntries.addEventListener('click', clearEntriesForUser);
 
         tbody.addEventListener('click', (event) => {
             const target = event.target;
@@ -964,6 +1029,35 @@ def api_delete():
     return jsonify({"success": True})
 
 
+@app.route('/api/clear_entries', methods=['POST'])
+def api_clear_entries():
+    req = request.get_json()
+    if not req or 'user' not in req:
+        return jsonify({"success": False, "message": "user가 필요합니다."}), 400
+
+    user = req.get('user')
+    data = load_data()
+    new_data = [d for d in data if d.get('user', 'guest') != user]
+
+    # 삭제된 게 없어도 그냥 성공 처리
+    save_data(new_data)
+    return jsonify({"success": True})
+
+
+@app.route('/api/delete_user', methods=['POST'])
+def api_delete_user():
+    req = request.get_json()
+    if not req or 'user' not in req:
+        return jsonify({"success": False, "message": "user가 필요합니다."}), 400
+
+    user = req.get('user')
+    data = load_data()
+    new_data = [d for d in data if d.get('user', 'guest') != user]
+
+    save_data(new_data)
+    return jsonify({"success": True})
+
+
 @app.route('/api/download', methods=['GET'])
 def api_download():
     data = load_data()
@@ -981,7 +1075,6 @@ def api_download():
             "main_category": "대분류",
             "sub_category": "소분류"
         })
-        # user, id 컬럼은 엑셀에서는 굳이 안 보여줘도 되면 드롭
         drop_cols = [c for c in ["user", "id"] if c in df.columns]
         if drop_cols:
             df = df.drop(columns=drop_cols)
