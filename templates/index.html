@@ -150,7 +150,7 @@
             font-size: 0.75rem;
         }
 
-        /* ===== 폼 ===== */
+        /* ===== 입력 폼: PC 4칸 / 태블릿 2칸 / 모바일 1칸 ===== */
         form {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -165,6 +165,11 @@
             gap: 4px;
             font-size: 0.85rem;
             min-width: 0;
+        }
+
+        /* 메모, 버튼 같은 넓은 줄 */
+        .form-group-wide {
+            grid-column: span 4;
         }
 
         label {
@@ -348,8 +353,16 @@
 
         /* ===== 반응형 ===== */
 
-        /* 768px 이하에서는 폼을 1열로 (모든 모바일·태블릿에서 세로 배치) */
-        @media (max-width: 768px) {
+        /* 태블릿: 폼 2칸, 넓은 줄은 전체 차지 */
+        @media (max-width: 900px) {
+            form {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .form-group-wide {
+                grid-column: 1 / -1;
+            }
+
             header {
                 flex-direction: column;
                 align-items: flex-start;
@@ -366,13 +379,10 @@
                 flex-wrap: wrap;
             }
 
-            form {
-                grid-template-columns: 1fr;
+            .card {
+                padding: 14px 14px 16px;
             }
-        }
 
-        /* 그래프, 카드 패딩 살짝 줄이기 */
-        @media (max-width: 600px) {
             .chart-container {
                 flex-direction: column;
             }
@@ -380,14 +390,18 @@
             .chart-box {
                 flex: 1 1 100%;
             }
-
-            .card {
-                padding: 14px 14px 16px;
-            }
         }
 
-        /* 작은 모바일에서 헤더 버튼/요약 정렬 */
+        /* 작은 모바일: 폼 1칸 + 버튼 세로 */
         @media (max-width: 520px) {
+            form {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group-wide {
+                grid-column: 1 / -1;
+            }
+
             .header-buttons {
                 flex-direction: column;
                 align-items: stretch;
@@ -491,11 +505,11 @@
                     <option value="">대분류를 먼저 선택하세요</option>
                 </select>
             </div>
-            <div class="form-group" style="grid-column: span 3;">
+            <div class="form-group form-group-wide">
                 <label for="memo">내용 (메모)</label>
                 <input type="text" id="memo" placeholder="예: 점심 식사, 월급, 교통비 등" required>
             </div>
-            <div class="form-group form-actions">
+            <div class="form-group form-actions form-group-wide">
                 <button type="submit" class="btn">➕ 내역 추가</button>
                 <div class="error-message" id="form-error" style="display:none;"></div>
             </div>
