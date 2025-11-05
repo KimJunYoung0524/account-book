@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "id": 1,
+    "user": "김준영",
+    "date": "2025-11-05",
+    "amount": 500000.0,
+    "memo": "아르바이트",
+    "main_category": "수입",
+    "sub_category": "월급"
+  },
+  {
+    "id": 2,
+    "user": "김준영",
+    "date": "2025-11-05",
+    "amount": 200000.0,
+    "memo": "옷",
+    "main_category": "지출",
+    "sub_category": "쇼핑"
+  }
+]

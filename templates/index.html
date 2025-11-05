@@ -189,10 +189,13 @@
             max-width: 100%;
             outline: none;
         }
-       input[type="date"] {
-       -webkit-appearance: none;
-       appearance: none;
-}
+
+        /* 아이폰에서 date input 튀어나오는 것 방지 */
+        input[type="date"] {
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
         input:focus,
         select:focus {
             border-color: var(--accent);
@@ -245,6 +248,27 @@
             color: var(--text-sub);
             font-size: 0.8rem;
             flex: 1;
+        }
+
+        /* ===== CSV IMPORT ===== */
+        .import-body {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+
+        .import-hint {
+            margin: 0;
+            color: var(--text-sub);
+        }
+
+        .import-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px 12px;
+            align-items: flex-end;
+            width: 100%;
         }
 
         /* ===== 표 ===== */
@@ -356,7 +380,7 @@
 
         /* ===== 반응형 ===== */
 
-        /* 태블릿: 폼 2칸, 넓은 줄은 전체 차지 */
+        /* 태블릿: 폼 2칸, CSV 2칸, 넓은 줄은 전체 차지 */
         @media (max-width: 900px) {
             form {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -364,6 +388,10 @@
 
             .form-group-wide {
                 grid-column: 1 / -1;
+            }
+
+            .import-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
             header {
@@ -395,7 +423,7 @@
             }
         }
 
-        /* 작은 모바일: 폼 1칸 + 버튼 세로 */
+        /* 작은 모바일: 폼 1칸 + CSV 1칸 + 버튼 세로 */
         @media (max-width: 520px) {
             form {
                 grid-template-columns: 1fr;
@@ -421,11 +449,15 @@
                 align-items: flex-start;
                 gap: 4px;
             }
- .filter-row {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-}
+
+            .filter-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .import-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -522,6 +554,40 @@
                 <div class="error-message" id="form-error" style="display:none;"></div>
             </div>
         </form>
+    </section>
+
+    <!-- CSV 업로드 카드 -->
+    <section class="card">
+        <div class="card-header">
+            <h2>CSV 내역 가져오기</h2>
+        </div>
+        <div class="import-body">
+            <p class="import-hint">
+                은행/카드 앱에서 CSV(또는 엑셀→CSV)로 다운로드한 후 업로드하면 여러 건을 한 번에 추가할 수 있습니다.<br>
+                가능한 한 열 이름을 <strong>날짜, 금액, 내용, (대분류), (소분류)</strong> 형태로 맞춰 주세요.
+            </p>
+            <div class="import-grid">
+                <div class="form-group">
+                    <label for="csv-main">기본 대분류</label>
+                    <select id="csv-main">
+                        <option value="지출">지출</option>
+                        <option value="수입">수입</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="csv-sub">기본 소분류</label>
+                    <select id="csv-sub"></select>
+                </div>
+                <div class="form-group">
+                    <label for="csv-file">CSV 파일 선택</label>
+                    <input type="file" id="csv-file" accept=".csv">
+                </div>
+                <div class="form-group form-actions">
+                    <button type="button" class="btn" id="btn-import-csv">📂 CSV 업로드</button>
+                    <div class="error-message" id="import-error" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
     </section>
 
     <!-- 리스트 카드 -->
@@ -632,6 +698,13 @@
     const monthBalanceEl = document.getElementById('month-balance');
     const monthTopList = document.getElementById('month-top-expense-list');
 
+    // CSV 관련 요소
+    const csvMainSelect = document.getElementById('csv-main');
+    const csvSubSelect = document.getElementById('csv-sub');
+    const csvFileInput = document.getElementById('csv-file');
+    const btnImportCsv = document.getElementById('btn-import-csv');
+    const importErrorBox = document.getElementById('import-error');
+
     let allItems = [];
     let mainPieChart = null;
     let expensePieChart = null;
@@ -669,6 +742,18 @@
         });
     }
 
+    function updateCsvSubCategories() {
+        const mainValue = csvMainSelect.value;
+        csvSubSelect.innerHTML = "";
+        const list = categories[mainValue] || [];
+        list.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            csvSubSelect.appendChild(opt);
+        });
+    }
+
     function clearError() {
         errorBox.style.display = 'none';
         errorBox.textContent = '';
@@ -677,6 +762,16 @@
     function showError(msg) {
         errorBox.textContent = msg;
         errorBox.style.display = 'block';
+    }
+
+    function clearImportError() {
+        importErrorBox.style.display = 'none';
+        importErrorBox.textContent = '';
+    }
+
+    function showImportError(msg) {
+        importErrorBox.textContent = msg;
+        importErrorBox.style.display = 'block';
     }
 
     function formatNumber(num) {
@@ -725,7 +820,7 @@
                     legend: { position: 'bottom' },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 const label = context.label || '';
                                 const value = context.parsed || 0;
                                 return `${label}: ${value.toLocaleString('ko-KR')}원`;
@@ -786,7 +881,7 @@
                     legend: { position: 'bottom' },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 const label = context.label || '';
                                 const value = context.parsed || 0;
                                 return `${label}: ${value.toLocaleString('ko-KR')}원`;
@@ -1047,7 +1142,7 @@
                 headers: {
                     'Content-Type': 'application/json;charset=utf-8'
                 },
-                body: JSON.stringify({ user: currentUser })
+                body: JSON.stringify({user: currentUser})
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
@@ -1074,7 +1169,7 @@
                 headers: {
                     'Content-Type': 'application/json;charset=utf-8'
                 },
-                body: JSON.stringify({ user: currentUser })
+                body: JSON.stringify({user: currentUser})
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
@@ -1092,6 +1187,44 @@
         }
     }
 
+    async function handleImportCsv() {
+        clearImportError();
+
+        const file = csvFileInput.files[0];
+        if (!file) {
+            showImportError("CSV 파일을 선택해 주세요.");
+            return;
+        }
+
+        const defaultMain = csvMainSelect.value || '지출';
+        const defaultSub = csvSubSelect.value || '기타지출';
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('user', currentUser);
+        formData.append('default_main', defaultMain);
+        formData.append('default_sub', defaultSub);
+
+        try {
+            const res = await fetch('/api/import', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                showImportError(data.message || '업로드 중 오류가 발생했습니다.');
+                return;
+            }
+            const count = data.imported || 0;
+            alert(`${count}건의 내역을 가져왔습니다.`);
+            csvFileInput.value = '';
+            await fetchList();
+        } catch (e) {
+            console.error(e);
+            showImportError('서버와 통신 중 오류가 발생했습니다.');
+        }
+    }
+
     function initUser() {
         const saved = localStorage.getItem('accountBookUser');
         currentUser = saved && saved.trim() ? saved.trim() : 'guest';
@@ -1102,6 +1235,7 @@
         initUser();
         setToday();
         updateSubCategories();
+        updateCsvSubCategories();
         fetchList();
 
         mainSelect.addEventListener('change', updateSubCategories);
@@ -1139,6 +1273,9 @@
                 deleteItem(id);
             }
         });
+
+        csvMainSelect.addEventListener('change', updateCsvSubCategories);
+        btnImportCsv.addEventListener('click', handleImportCsv);
     });
 </script>
 </body>
