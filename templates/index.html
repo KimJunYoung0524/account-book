@@ -1,391 +1,11 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2685.1">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
-  </style>
-</head>
-<body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html lang="ko"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;가계부 시스템&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>:root {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--bg: #f5f7fb;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--card-bg: #ffffff;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--accent: #4f46e5;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--accent-light: #eef2ff;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--border: #e2e8f0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--text-main: #111827;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--text-sub: #6b7280;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--danger: #ef4444;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>* {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>box-sizing: border-box;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>body {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background-color: var(--bg);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: var(--text-main);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.wrapper {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>max-width: 1000px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 24px auto;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 0 16px 32px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>header {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>justify-content: space-between;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin-bottom: 16px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>gap: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>header h1 {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 1.4rem;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>gap: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>header h1 span.logo-dot {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>width: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>height: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 999px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: var(--accent);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: inline-block;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>header .subtitle {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 0.85rem;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: var(--text-sub);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.card {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background-color: var(--card-bg);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 16px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 16px 20px 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border: 1px solid var(--border);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin-bottom: 16px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.card-header {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>justify-content: space-between;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin-bottom: 12px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.card-header h2 {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 1rem;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.btn {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border: none;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 999px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 8px 14px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 0.85rem;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>cursor: pointer;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: inline-flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>gap: 6px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background-color: var(--accent);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: #fff;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.btn.secondary {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background-color: var(--accent-light);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: var(--accent);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.btn:active {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>transform: translateY(1px);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>form {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: grid;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>grid-template-columns: repeat(4, minmax(0, 1fr));</p>
-<p class="p1"><span class="Apple-converted-space">            </span>gap: 10px 12px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: flex-end;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.form-group {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2685.1">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
-  </style>
-</head>
-<body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html lang="ko"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;가계부 시스템&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>:root {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--bg: #f5f7fb;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--card-bg: #ffffff;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--accent: #4f46e5;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--accent-light: #eef2ff;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--border: #e2e8f0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--text-main: #111827;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--text-sub: #6b7280;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--danger: #ef4444;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>* {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>box-sizing: border-box;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>body {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background-color: var(--bg);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: var(--text-main);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.wrapper {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>max-width: 1000px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 24px auto;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 0 16px 32px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>header {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>justify-content: space-between;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin-bottom: 16px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>gap: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>header h1 {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 1.4rem;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>gap: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>header h1 span.logo-dot {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>width: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>height: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 999px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: var(--accent);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: inline-block;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>header .subtitle {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 0.85rem;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: var(--text-sub);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.card {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background-color: var(--card-bg);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 16px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 16px 20px 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border: 1px solid var(--border);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin-bottom: 16px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.card-header {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>justify-content: space-between;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin-bottom: 12px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.card-header h2 {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 1rem;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.btn {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border: none;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 999px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 8px 14px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 0.85rem;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>cursor: pointer;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: inline-flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>gap: 6px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background-color: var(--accent);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: #fff;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.btn.secondary {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background-color: var(--accent-light);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: var(--accent);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.btn:active {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>transform: translateY(1px);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>form {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: grid;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>grid-template-columns: repeat(4, minmax(0, 1fr));</p>
-<p class="p1"><span class="Apple-converted-space">            </span>gap: 10px 12px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: flex-end;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.form-group {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2685.1">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
-  </style>
-</head>
-<body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html lang="ko"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;가계부 시스템&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>:root {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--bg: #f5f7fb;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--card-bg: #ffffff;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--accent: #4f46e5;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--accent-light: #eef2ff;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--border: #e2e8f0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--text-main: #111827;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--text-sub: #6b7280;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--danger: #ef4444;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>* {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>box-sizing: border-box;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>body {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background-color: var(--bg);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: var(--text-main);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.wrapper {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>max-width: 1000px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 24px auto;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 0 16px 32px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>header {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>justify-content: space-between;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin-bottom: 16px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>gap: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>header h1 {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 1.4rem;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>gap: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>header h1 span.logo-dot {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>width: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>height: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 999px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: var(--accent);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: inline-block;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>header .subtitle {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 0.85rem;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: var(--text-sub);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.card {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background-color: var(--card-bg);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 16px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 16px 20px 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border: 1px solid var(--border);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin-bottom: 16px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.card-header {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>justify-content: space-between;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin-bottom: 12px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.card-header h2 {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 1rem;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.btn {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border: none;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 999px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 8px 14px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 0.85rem;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>cursor: pointer;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: inline-flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>gap: 6px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background-color: var(--accent);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: #fff;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<ㅏ<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
-
 <head>
     <meta charset="UTF-8">
     <title>가계부 시스템</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
         :root {
             --bg: #f5f7fb;
@@ -398,9 +18,7 @@
             --danger: #ef4444;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
@@ -417,14 +35,13 @@
         }
 
         /* ===== 헤더 ===== */
-
         header {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 16px;
-            gap: 10px;
+            margin-bottom: 20px;
+            gap: 12px;
             width: 100%;
         }
 
@@ -445,7 +62,7 @@
         }
 
         header .subtitle {
-            margin: 0;
+            margin: 2px 0 0;
             font-size: 0.85rem;
             color: var(--text-sub);
         }
@@ -474,7 +91,6 @@
         }
 
         /* ===== 카드 공통 ===== */
-
         .card {
             background-color: var(--card-bg);
             border-radius: 16px;
@@ -500,7 +116,6 @@
         }
 
         /* ===== 버튼 ===== */
-
         .btn {
             border: none;
             border-radius: 999px;
@@ -536,7 +151,6 @@
         }
 
         /* ===== 폼 ===== */
-
         form {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -587,8 +201,7 @@
             margin-top: 4px;
         }
 
-        /* ===== 상단 요약/필터 ===== */
-
+        /* ===== 상단 요약 / 필터 ===== */
         .summary-bar {
             display: flex;
             justify-content: space-between;
@@ -613,13 +226,13 @@
             width: 100%;
         }
 
-        .filter-field {
+        .filter-row .filter-field {
             display: flex;
             flex-direction: column;
             gap: 4px;
         }
 
-        .filter-hint {
+        .filter-row .filter-hint {
             margin: 0;
             color: var(--text-sub);
             font-size: 0.8rem;
@@ -627,7 +240,6 @@
         }
 
         /* ===== 표 ===== */
-
         table {
             width: 100%;
             border-collapse: collapse;
@@ -677,7 +289,6 @@
         }
 
         /* ===== 이번 달 요약 / 그래프 ===== */
-
         .month-summary-body {
             display: flex;
             flex-direction: column;
@@ -737,7 +348,7 @@
 
         /* ===== 반응형 ===== */
 
-        @media (max-width: 760px) {
+        @media (max-width: 768px) {
             header {
                 flex-direction: column;
                 align-items: flex-start;
@@ -749,12 +360,27 @@
             }
 
             .header-buttons {
-                justify-content: flex-start;
                 width: 100%;
+                justify-content: flex-start;
+                flex-wrap: wrap;
             }
 
             form {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 600px) {
+            .chart-container {
+                flex-direction: column;
+            }
+
+            .chart-box {
+                flex: 1 1 100%;
+            }
+
+            .card {
+                padding: 14px 14px 16px;
             }
         }
 
@@ -766,9 +392,10 @@
             .header-buttons {
                 flex-direction: column;
                 align-items: stretch;
+                gap: 8px;
             }
 
-            .btn {
+            .header-buttons .btn {
                 width: 100%;
                 justify-content: center;
             }
@@ -776,1079 +403,723 @@
             .summary-bar {
                 flex-direction: column;
                 align-items: flex-start;
+                gap: 4px;
             }
         }
     </style>
 </head>
-
 <body>
-    <div class="wrapper">
-        <!-- ===== 헤더 ===== -->
-        <header>
+<div class="wrapper">
+    <header>
+        <div>
+            <h1><span class="logo-dot"></span> 가계부</h1>
+            <p class="subtitle">수입·지출을 간단하게 기록하고 엑셀로 관리하세요.</p>
+        </div>
+        <div class="header-right">
+            <div class="header-user">
+                현재 사용자: <strong id="current-user-label">guest</strong>
+            </div>
+            <div class="header-buttons">
+                <button class="btn secondary" id="btn-change-user">사용자 변경</button>
+                <button class="btn danger" id="btn-delete-user">사용자 삭제</button>
+                <button class="btn secondary" id="btn-download-top">⬇️ 엑셀 다운로드</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 월별 필터 카드 -->
+    <section class="card">
+        <div class="card-header">
+            <h2>조회 기간</h2>
+        </div>
+        <div class="filter-row">
+            <div class="filter-field">
+                <label for="month-filter">월 선택</label>
+                <input type="month" id="month-filter">
+            </div>
+            <div class="filter-field">
+                <label>&nbsp;</label>
+                <button class="btn secondary" id="btn-clear-filter">전체 보기</button>
+            </div>
+            <p class="filter-hint">선택한 월 기준으로 목록, 합계, 요약, 그래프가 모두 필터링됩니다. (미선택 시 전체)</p>
+        </div>
+    </section>
+
+    <!-- 이번 달 요약 카드 -->
+    <section class="card">
+        <div class="card-header">
+            <h2>이번 달 요약</h2>
+        </div>
+        <div class="month-summary-body">
+            <p id="month-summary-label" class="month-summary-text">전체 기간 기준 요약입니다.</p>
+            <div class="month-summary-numbers">
+                <span>수입: <strong id="month-income">0</strong> 원</span>
+                <span>지출: <strong id="month-expense">0</strong> 원</span>
+                <span>잔액: <strong id="month-balance">0</strong> 원</span>
+            </div>
             <div>
-                <h1><span class="logo-dot"></span> 가계부</h1>
-                <p class="subtitle">수입·지출을 간단하게 기록하고 엑셀로 관리하세요.</p>
+                <p class="month-summary-text">지출 TOP 3 카테고리</p>
+                <ul id="month-top-expense-list" class="month-top-expense-list"></ul>
             </div>
-            <div class="header-right">
-                <div class="header-user">
-                    현재 사용자: <strong id="current-user-label">guest</strong>
-                </div>
-                <div class="header-buttons">
-                    <button class="btn secondary" id="btn-change-user">사용자 변경</button>
-                    <button class="btn danger" id="btn-delete-user">사용자 삭제</button>
-                    <button class="btn secondary" id="btn-download-top">⬇️ 엑셀 다운로드</button>
-                </div>
-            </div>
-        </header>
+        </div>
+    </section>
 
-        <!-- ===== 조회 기간 카드 ===== -->
-        <section class="card">
-            <div class="card-header">
-                <h2>조회 기간</h2>
+    <!-- 입력 카드 -->
+    <section class="card">
+        <div class="card-header">
+            <h2>내역 입력</h2>
+        </div>
+        <form id="account-form">
+            <div class="form-group">
+                <label for="date">날짜</label>
+                <input type="date" id="date" required>
             </div>
-            <div class="filter-row">
-                <div class="filter-field">
-                    <label for="month-filter">월 선택</label>
-                    <input type="month" id="month-filter">
-                </div>
-                <div class="filter-field">
-                    <label>&nbsp;</label>
-                    <button class="btn secondary" id="btn-clear-filter">전체 보기</button>
-                </div>
-                <p class="filter-hint">
-                    선택한 월 기준으로 목록, 합계, 요약, 그래프가 모두 필터링됩니다. (미선택 시 전체)
-                </p>
+            <div class="form-group">
+                <label for="amount">금액</label>
+                <input type="number" id="amount" min="0" placeholder="예: 12000" required>
             </div>
-        </section>
+            <div class="form-group">
+                <label for="main-category">대분류</label>
+                <select id="main-category" required>
+                    <option value="">선택하세요</option>
+                    <option value="수입">수입</option>
+                    <option value="지출">지출</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sub-category">소분류</label>
+                <select id="sub-category" required>
+                    <option value="">대분류를 먼저 선택하세요</option>
+                </select>
+            </div>
+            <div class="form-group" style="grid-column: span 3;">
+                <label for="memo">내용 (메모)</label>
+                <input type="text" id="memo" placeholder="예: 점심 식사, 월급, 교통비 등" required>
+            </div>
+            <div class="form-group form-actions">
+                <button type="submit" class="btn">➕ 내역 추가</button>
+                <div class="error-message" id="form-error" style="display:none;"></div>
+            </div>
+        </form>
+    </section>
 
-        <!-- ===== 이번 달 요약 카드 ===== -->
-        <section class="card">
-            <div class="card-header">
-                <h2>이번 달 요약</h2>
+    <!-- 리스트 카드 -->
+    <section class="card">
+        <div class="card-header">
+            <h2>내역 목록</h2>
+            <div class="header-buttons">
+                <button class="btn secondary" id="btn-clear-entries">내역 전체 삭제</button>
+                <button class="btn secondary" id="btn-download-bottom">
+                    ⬇️ 엑셀 다운로드
+                </button>
             </div>
-            <div class="month-summary-body">
-                <p id="month-summary-label" class="month-summary-text">전체 기간 기준 요약입니다.</p>
-                <div class="month-summary-numbers">
-                    <span>수입: <strong id="month-income">0</strong> 원</span>
-                    <span>지출: <strong id="month-expense">0</strong> 원</span>
-                    <span>잔액: <strong id="month-balance">0</strong> 원</span>
-                </div>
-                <div>
-                    <p class="month-summary-text">지출 TOP 3 카테고리</p>
-                    <ul id="month-top-expense-list" class="month-top-expense-list"></ul>
-                </div>
-            </div>
-        </section>
+        </div>
 
-        <!-- ===== 내역 입력 카드 ===== -->
-        <section class="card">
-            <div class="card-header">
-                <h2>내역 입력</h2>
+        <div class="summary-bar">
+            <div>총 건수: <strong id="summary-count">0</strong> 건</div>
+            <div>
+                수입 합계: <strong id="summary-income">0</strong> 원 ·
+                지출 합계: <strong id="summary-expense">0</strong> 원
             </div>
-            <form id="account-form">
-                <div class="form-group">
-                    <label for="date">날짜</label>
-                    <input type="date" id="date" required>
-                </div>
-                <div class="form-group">
-                    <label for="amount">금액</label>
-                    <input type="number" id="amount" min="0" placeholder="예: 12000" required>
-                </div>
-                <div class="form-group">
-                    <label for="main-category">대분류</label>
-                    <select id="main-category" required>
-                        <option value="">선택하세요</option>
-                        <option value="수입">수입</option>
-                        <option value="지출">지출</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="sub-category">소분류</label>
-                    <select id="sub-category" required>
-                        <option value="">대분류를 먼저 선택하세요</option>
-                    </select>
-                </div>
-                <div class="form-group" style="grid-column: span 3;">
-                    <label for="memo">내용 (메모)</label>
-                    <input type="text" id="memo" placeholder="예: 점심 식사, 월급, 교통비 등" required>
-                </div>
-                <div class="form-group form-actions">
-                    <button type="submit" class="btn">➕ 내역 추가</button>
-                    <div class="error-message" id="form-error" style="display:none;"></div>
-                </div>
-            </form>
-        </section>
+        </div>
 
-        <!-- ===== 내역 목록 카드 ===== -->
-        <section class="card">
-            <div class="card-header">
-                <h2>내역 목록</h2>
-                <div class="header-buttons">
-                    <button class="btn secondary" id="btn-clear-entries">내역 전체 삭제</button>
-                    <button class="btn secondary" id="btn-download-bottom">⬇️ 엑셀 다운로드</button>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                <tr>
+                    <th>날짜</th>
+                    <th>대분류</th>
+                    <th>소분류</th>
+                    <th>금액</th>
+                    <th>내용</th>
+                    <th>작업</th>
+                </tr>
+                </thead>
+                <tbody id="table-body">
+                <tr class="no-data-row">
+                    <td colspan="6" class="no-data">아직 저장된 내역이 없습니다.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- 그래프 카드 -->
+    <section class="card">
+        <div class="card-header">
+            <h2>그래프 요약</h2>
+        </div>
+        <div class="chart-container">
+            <div class="chart-box">
+                <div class="chart-title">대분류 비율 (수입 vs 지출)</div>
+                <canvas id="main-pie-chart"></canvas>
+                <div id="main-chart-empty" class="chart-empty-text" style="display:none;">
+                    수입 또는 지출 내역이 없습니다.
                 </div>
             </div>
-
-            <div class="summary-bar">
-                <div>총 건수: <strong id="summary-count">0</strong> 건</div>
-                <div>
-                    수입 합계: <strong id="summary-income">0</strong> 원 ·
-                    지출 합계: <strong id="summary-expense">0</strong> 원
+            <div class="chart-box">
+                <div class="chart-title">지출 비율 (소분류 기준)</div>
+                <canvas id="expense-pie-chart"></canvas>
+                <div id="expense-chart-empty" class="chart-empty-text" style="display:none;">
+                    지출 내역이 없습니다. 지출을 입력하면 소분류 기준 원형 그래프가 표시됩니다.
                 </div>
             </div>
+        </div>
+    </section>
+</div>
 
-            <div style="overflow-x:auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>날짜</th>
-                            <th>대분류</th>
-                            <th>소분류</th>
-                            <th>금액</th>
-                            <th>내용</th>
-                            <th>작업</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body">
-                        <tr class="no-data-row">
-                            <td colspan="6" class="no-data">아직 저장된 내역이 없습니다.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
+<script>
+    const categories = {
+        "수입": ["월급", "용돈", "보너스", "이자소득", "기타수입"],
+        "지출": ["식비", "교통", "주거", "통신", "쇼핑", "문화생활", "교육", "의료/건강", "기타지출"]
+    };
 
-        <!-- ===== 그래프 카드 ===== -->
-        <section class="card">
-            <div class="card-header">
-                <h2>그래프 요약</h2>
-            </div>
-            <div class="chart-container">
-                <div class="chart-box">
-                    <div class="chart-title">대분류 비율 (수입 vs 지출)</div>
-                    <canvas id="main-pie-chart"></canvas>
-                    <div id="main-chart-empty" class="chart-empty-text" style="display:none;">
-                        수입 또는 지출 내역이 없습니다.
-                    </div>
-                </div>
-                <div class="chart-box">
-                    <div class="chart-title">지출 비율 (소분류 기준)</div>
-                    <canvas id="expense-pie-chart"></canvas>
-                    <div id="expense-chart-empty" class="chart-empty-text" style="display:none;">
-                        지출 내역이 없습니다. 지출을 입력하면 소분류 기준 원형 그래프가 표시됩니다.
-                    </div>
-                </div>
-            </div>
-        </section>
-    </div>
+    let currentUser = 'guest';
 
-    <!-- ===== JS 로직 (Flask API 연동) ===== -->
-    <script>
-        const categories = {
-            "수입": ["월급", "용돈", "보너스", "이자소득", "기타수입"],
-            "지출": ["식비", "교통", "주거", "통신", "쇼핑", "문화생활", "교육", "의료/건강", "기타지출"]
-        };
+    const form = document.getElementById('account-form');
+    const dateInput = document.getElementById('date');
+    const amountInput = document.getElementById('amount');
+    const mainSelect = document.getElementById('main-category');
+    const subSelect = document.getElementById('sub-category');
+    const memoInput = document.getElementById('memo');
+    const errorBox = document.getElementById('form-error');
 
-        let currentUser = 'guest';
+    const tbody = document.getElementById('table-body');
+    const summaryCount = document.getElementById('summary-count');
+    const summaryIncome = document.getElementById('summary-income');
+    const summaryExpense = document.getElementById('summary-expense');
 
-        const form = document.getElementById('account-form');
-        const dateInput = document.getElementById('date');
-        const amountInput = document.getElementById('amount');
-        const mainSelect = document.getElementById('main-category');
-        const subSelect = document.getElementById('sub-category');
-        const memoInput = document.getElementById('memo');
-        const errorBox = document.getElementById('form-error');
+    const btnDownloadTop = document.getElementById('btn-download-top');
+    const btnDownloadBottom = document.getElementById('btn-download-bottom');
 
-        const tbody = document.getElementById('table-body');
-        const summaryCount = document.getElementById('summary-count');
-        const summaryIncome = document.getElementById('summary-income');
-        const summaryExpense = document.getElementById('summary-expense');
+    const monthFilter = document.getElementById('month-filter');
+    const btnClearFilter = document.getElementById('btn-clear-filter');
 
-        const btnDownloadTop = document.getElementById('btn-download-top');
-        const btnDownloadBottom = document.getElementById('btn-download-bottom');
-        const btnClearEntries = document.getElementById('btn-clear-entries');
+    const mainChartCanvas = document.getElementById('main-pie-chart');
+    const mainChartEmptyText = document.getElementById('main-chart-empty');
+    const expenseChartCanvas = document.getElementById('expense-pie-chart');
+    const expenseChartEmptyText = document.getElementById('expense-chart-empty');
 
-        const monthFilter = document.getElementById('month-filter');
-        const btnClearFilter = document.getElementById('btn-clear-filter');
+    const currentUserLabel = document.getElementById('current-user-label');
+    const btnChangeUser = document.getElementById('btn-change-user');
+    const btnDeleteUser = document.getElementById('btn-delete-user');
+    const btnClearEntries = document.getElementById('btn-clear-entries');
 
-        const mainChartCanvas = document.getElementById('main-pie-chart');
-        const mainChartEmptyText = document.getElementById('main-chart-empty');
-        const expenseChartCanvas = document.getElementById('expense-pie-chart');
-        const expenseChartEmptyText = document.getElementById('expense-chart-empty');
+    const monthSummaryLabel = document.getElementById('month-summary-label');
+    const monthIncomeEl = document.getElementById('month-income');
+    const monthExpenseEl = document.getElementById('month-expense');
+    const monthBalanceEl = document.getElementById('month-balance');
+    const monthTopList = document.getElementById('month-top-expense-list');
 
-        const currentUserLabel = document.getElementById('current-user-label');
-        const btnChangeUser = document.getElementById('btn-change-user');
-        const btnDeleteUser = document.getElementById('btn-delete-user');
+    let allItems = [];
+    let mainPieChart = null;
+    let expensePieChart = null;
 
-        const monthSummaryLabel = document.getElementById('month-summary-label');
-        const monthIncomeEl = document.getElementById('month-income');
-        const monthExpenseEl = document.getElementById('month-expense');
-        const monthBalanceEl = document.getElementById('month-balance');
-        const monthTopList = document.getElementById('month-top-expense-list');
+    function setToday() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
+    }
 
-        let allItems = [];
-        let mainPieChart = null;
-        let expensePieChart = null;
+    function updateSubCategories() {
+        const mainValue = mainSelect.value;
+        subSelect.innerHTML = "";
 
-        function setToday() {
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const dd = String(today.getDate()).padStart(2, '0');
-            dateInput.value = `${yyyy}-${mm}-${dd}`;
+        if (!mainValue || !categories[mainValue]) {
+            const opt = document.createElement('option');
+            opt.value = "";
+            opt.textContent = "대분류를 먼저 선택하세요";
+            subSelect.appendChild(opt);
+            return;
         }
 
-        function updateSubCategories() {
-            const mainValue = mainSelect.value;
-            subSelect.innerHTML = "";
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = "";
+        defaultOpt.textContent = "소분류 선택";
+        subSelect.appendChild(defaultOpt);
 
-            if (!mainValue || !categories[mainValue]) {
-                const opt = document.createElement('option');
-                opt.value = "";
-                opt.textContent = "대분류를 먼저 선택하세요";
-                subSelect.appendChild(opt);
-                return;
-            }
+        categories[mainValue].forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            subSelect.appendChild(opt);
+        });
+    }
 
-            const defaultOpt = document.createElement('option');
-            defaultOpt.value = "";
-            defaultOpt.textContent = "소분류 선택";
-            subSelect.appendChild(defaultOpt);
+    function clearError() {
+        errorBox.style.display = 'none';
+        errorBox.textContent = '';
+    }
 
-            categories[mainValue].forEach(cat => {
-                const opt = document.createElement('option');
-                opt.value = cat;
-                opt.textContent = cat;
-                subSelect.appendChild(opt);
-            });
-        }
+    function showError(msg) {
+        errorBox.textContent = msg;
+        errorBox.style.display = 'block';
+    }
 
-        function clearError() {
-            errorBox.style.display = 'none';
-            errorBox.textContent = '';
-        }
+    function formatNumber(num) {
+        const n = Number(num) || 0;
+        return n.toLocaleString('ko-KR');
+    }
 
-        function showError(msg) {
-            errorBox.textContent = msg;
-            errorBox.style.display = 'block';
-        }
+    function updateMainPieChart(items) {
+        const income = items
+            .filter(it => it.main_category === '수입')
+            .reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
+        const expense = items
+            .filter(it => it.main_category === '지출')
+            .reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
 
-        function formatNumber(num) {
-            const n = Number(num) || 0;
-            return n.toLocaleString('ko-KR');
-        }
-
-        function updateMainPieChart(items) {
-            const income = items
-                .filter(it => it.main_category === '수입')
-                .reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
-            const expense = items
-                .filter(it => it.main_category === '지출')
-                .reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
-
-            if (income === 0 && expense === 0) {
-                if (mainPieChart) {
-                    mainPieChart.destroy();
-                    mainPieChart = null;
-                }
-                mainChartCanvas.style.display = 'none';
-                mainChartEmptyText.style.display = 'block';
-                return;
-            }
-
-            mainChartCanvas.style.display = 'block';
-            mainChartEmptyText.style.display = 'none';
-
+        if (income === 0 && expense === 0) {
             if (mainPieChart) {
                 mainPieChart.destroy();
+                mainPieChart = null;
             }
+            mainChartCanvas.style.display = 'none';
+            mainChartEmptyText.style.display = 'block';
+            return;
+        }
 
-            const ctx = mainChartCanvas.getContext('2d');
-            mainPieChart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: ['수입', '지출'],
-                    datasets: [{
-                        data: [income, expense],
-                        backgroundColor: ['#22c55e', '#ef4444']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'bottom' },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    const label = context.label || '';
-                                    const value = context.parsed || 0;
-                                    return `${label}: ${value.toLocaleString('ko-KR')}원`;
-                                }
+        mainChartCanvas.style.display = 'block';
+        mainChartEmptyText.style.display = 'none';
+
+        if (mainPieChart) {
+            mainPieChart.destroy();
+        }
+
+        const ctx = mainChartCanvas.getContext('2d');
+        mainPieChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['수입', '지출'],
+                datasets: [{
+                    data: [income, expense],
+                    backgroundColor: ['#22c55e', '#ef4444']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                return `${label}: ${value.toLocaleString('ko-KR')}원`;
                             }
                         }
                     }
                 }
-            });
-        }
-
-        function updateExpensePieChart(items) {
-            const expenses = items.filter(it => it.main_category === '지출');
-
-            if (!expenses.length) {
-                if (expensePieChart) {
-                    expensePieChart.destroy();
-                    expensePieChart = null;
-                }
-                expenseChartCanvas.style.display = 'none';
-                expenseChartEmptyText.style.display = 'block';
-                return;
             }
+        });
+    }
 
-            const sums = {};
-            expenses.forEach(it => {
-                const key = it.sub_category || '기타';
-                const amt = Number(it.amount) || 0;
-                sums[key] = (sums[key] || 0) + amt;
-            });
+    function updateExpensePieChart(items) {
+        const expenses = items.filter(it => it.main_category === '지출');
 
-            const labels = Object.keys(sums);
-            const data = labels.map(k => sums[k]);
-
-            expenseChartCanvas.style.display = 'block';
-            expenseChartEmptyText.style.display = 'none';
-
+        if (!expenses.length) {
             if (expensePieChart) {
                 expensePieChart.destroy();
+                expensePieChart = null;
             }
+            expenseChartCanvas.style.display = 'none';
+            expenseChartEmptyText.style.display = 'block';
+            return;
+        }
 
-            const ctx = expenseChartCanvas.getContext('2d');
-            expensePieChart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: [
-                            '#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6',
-                            '#0ea5e9', '#6366f1', '#8b5cf6', '#ec4899', '#6b7280'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'bottom' },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    const label = context.label || '';
-                                    const value = context.parsed || 0;
-                                    return `${label}: ${value.toLocaleString('ko-KR')}원`;
-                                }
+        const sums = {};
+        expenses.forEach(it => {
+            const key = it.sub_category || '기타';
+            const amt = Number(it.amount) || 0;
+            sums[key] = (sums[key] || 0) + amt;
+        });
+
+        const labels = Object.keys(sums);
+        const data = labels.map(k => sums[k]);
+
+        expenseChartCanvas.style.display = 'block';
+        expenseChartEmptyText.style.display = 'none';
+
+        if (expensePieChart) {
+            expensePieChart.destroy();
+        }
+
+        const ctx = expenseChartCanvas.getContext('2d');
+        expensePieChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: [
+                        '#ef4444', '#f97316', '#eab308', '#22c55e', '#14b8a6',
+                        '#0ea5e9', '#6366f1', '#8b5cf6', '#ec4899', '#6b7280'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                return `${label}: ${value.toLocaleString('ko-KR')}원`;
                             }
                         }
                     }
                 }
-            });
+            }
+        });
+    }
+
+    function updateCharts(items) {
+        updateMainPieChart(items);
+        updateExpensePieChart(items);
+    }
+
+    function updateMonthlySummary(items, monthValue) {
+        let income = 0;
+        let expense = 0;
+
+        items.forEach(it => {
+            const amt = Number(it.amount) || 0;
+            if (it.main_category === '수입') income += amt;
+            if (it.main_category === '지출') expense += amt;
+        });
+
+        monthIncomeEl.textContent = formatNumber(income);
+        monthExpenseEl.textContent = formatNumber(expense);
+        monthBalanceEl.textContent = formatNumber(income - expense);
+
+        if (monthValue) {
+            monthSummaryLabel.textContent = `${monthValue} 기준 요약입니다.`;
+        } else {
+            monthSummaryLabel.textContent = '전체 기간 기준 요약입니다.';
         }
 
-        function updateCharts(items) {
-            updateMainPieChart(items);
-            updateExpensePieChart(items);
+        monthTopList.innerHTML = '';
+        const expenses = items.filter(it => it.main_category === '지출');
+        if (!expenses.length) {
+            const li = document.createElement('li');
+            li.textContent = '지출 내역이 없습니다.';
+            monthTopList.appendChild(li);
+            return;
         }
 
-        function updateMonthlySummary(items, monthValue) {
-            let income = 0;
-            let expense = 0;
+        const sums = {};
+        expenses.forEach(it => {
+            const key = it.sub_category || '기타';
+            const amt = Number(it.amount) || 0;
+            sums[key] = (sums[key] || 0) + amt;
+        });
 
-            items.forEach(it => {
-                const amt = Number(it.amount) || 0;
-                if (it.main_category === '수입') income += amt;
-                if (it.main_category === '지출') expense += amt;
-            });
+        const sorted = Object.entries(sums).sort((a, b) => b[1] - a[1]).slice(0, 3);
+        sorted.forEach(([name, value]) => {
+            const li = document.createElement('li');
+            li.textContent = `${name}: ${formatNumber(value)} 원`;
+            monthTopList.appendChild(li);
+        });
+    }
 
-            monthIncomeEl.textContent = formatNumber(income);
-            monthExpenseEl.textContent = formatNumber(expense);
-            monthBalanceEl.textContent = formatNumber(income - expense);
+    function renderTable(items) {
+        tbody.innerHTML = "";
 
-            if (monthValue) {
-                monthSummaryLabel.textContent = `${monthValue} 기준 요약입니다.`;
+        if (!items || items.length === 0) {
+            const tr = document.createElement('tr');
+            tr.classList.add('no-data-row');
+            const td = document.createElement('td');
+            td.colSpan = 6;
+            td.className = 'no-data';
+            td.textContent = '아직 저장된 내역이 없습니다.';
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+
+            summaryCount.textContent = '0';
+            summaryIncome.textContent = '0';
+            summaryExpense.textContent = '0';
+
+            updateCharts([]);
+            return;
+        }
+
+        let incomeSum = 0;
+        let expenseSum = 0;
+
+        items.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+
+        items.forEach(item => {
+            const tr = document.createElement('tr');
+
+            const tdDate = document.createElement('td');
+            tdDate.textContent = item.date || '';
+            tr.appendChild(tdDate);
+
+            const tdMain = document.createElement('td');
+            tdMain.textContent = item.main_category || '';
+            tr.appendChild(tdMain);
+
+            const tdSub = document.createElement('td');
+            tdSub.textContent = item.sub_category || '';
+            tr.appendChild(tdSub);
+
+            const tdAmount = document.createElement('td');
+            const amount = Number(item.amount) || 0;
+
+            if (item.main_category === '수입') {
+                incomeSum += amount;
+                tdAmount.classList.add('amount-income');
+                tdAmount.textContent = '+' + formatNumber(amount);
+            } else if (item.main_category === '지출') {
+                expenseSum += amount;
+                tdAmount.classList.add('amount-expense');
+                tdAmount.textContent = '-' + formatNumber(amount);
             } else {
-                monthSummaryLabel.textContent = '전체 기간 기준 요약입니다.';
+                tdAmount.textContent = formatNumber(amount);
             }
+            tr.appendChild(tdAmount);
 
-            monthTopList.innerHTML = '';
-            const expenses = items.filter(it => it.main_category === '지출');
-            if (!expenses.length) {
-                const li = document.createElement('li');
-                li.textContent = '지출 내역이 없습니다.';
-                monthTopList.appendChild(li);
-                return;
-            }
+            const tdMemo = document.createElement('td');
+            tdMemo.textContent = item.memo || '';
+            tr.appendChild(tdMemo);
 
-            const sums = {};
-            expenses.forEach(it => {
-                const key = it.sub_category || '기타';
-                const amt = Number(it.amount) || 0;
-                sums[key] = (sums[key] || 0) + amt;
-            });
+            const tdActions = document.createElement('td');
+            const btnDel = document.createElement('button');
+            btnDel.textContent = '삭제';
+            btnDel.className = 'btn secondary btn-delete-row';
+            btnDel.dataset.id = item.id;
+            tdActions.appendChild(btnDel);
+            tr.appendChild(tdActions);
 
-            const sorted = Object.entries(sums).sort((a, b) => b[1] - a[1]).slice(0, 3);
-            sorted.forEach(([name, value]) => {
-                const li = document.createElement('li');
-                li.textContent = `${name}: ${formatNumber(value)} 원`;
-                monthTopList.appendChild(li);
-            });
+            tbody.appendChild(tr);
+        });
+
+        summaryCount.textContent = String(items.length);
+        summaryIncome.textContent = formatNumber(incomeSum);
+        summaryExpense.textContent = formatNumber(expenseSum);
+
+        updateCharts(items);
+    }
+
+    function applyFilterAndRender() {
+        let items = allItems || [];
+        const month = monthFilter.value; // YYYY-MM
+
+        if (month) {
+            items = items.filter(it => (it.date || '').startsWith(month));
         }
 
-        function renderTable(items) {
-            tbody.innerHTML = "";
+        renderTable(items);
+        updateMonthlySummary(items, month);
+    }
 
-            if (!items || items.length === 0) {
-                const tr = document.createElement('tr');
-                tr.classList.add('no-data-row');
-                const td = document.createElement('td');
-                td.colSpan = 6;
-                td.className = 'no-data';
-                td.textContent = '아직 저장된 내역이 없습니다.';
-                tr.appendChild(td);
-                tbody.appendChild(tr);
-
-                summaryCount.textContent = '0';
-                summaryIncome.textContent = '0';
-                summaryExpense.textContent = '0';
-
-                updateCharts([]);
-                return;
-            }
-
-            let incomeSum = 0;
-            let expenseSum = 0;
-
-            items.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-
-            items.forEach(item => {
-                const tr = document.createElement('tr');
-
-                const tdDate = document.createElement('td');
-                tdDate.textContent = item.date || '';
-                tr.appendChild(tdDate);
-
-                const tdMain = document.createElement('td');
-                tdMain.textContent = item.main_category || '';
-                tr.appendChild(tdMain);
-
-                const tdSub = document.createElement('td');
-                tdSub.textContent = item.sub_category || '';
-                tr.appendChild(tdSub);
-
-                const tdAmount = document.createElement('td');
-                const amount = Number(item.amount) || 0;
-
-                if (item.main_category === '수입') {
-                    incomeSum += amount;
-                    tdAmount.classList.add('amount-income');
-                    tdAmount.textContent = '+' + formatNumber(amount);
-                } else if (item.main_category === '지출') {
-                    expenseSum += amount;
-                    tdAmount.classList.add('amount-expense');
-                    tdAmount.textContent = '-' + formatNumber(amount);
-                } else {
-                    tdAmount.textContent = formatNumber(amount);
-                }
-                tr.appendChild(tdAmount);
-
-                const tdMemo = document.createElement('td');
-                tdMemo.textContent = item.memo || '';
-                tr.appendChild(tdMemo);
-
-                const tdActions = document.createElement('td');
-                const btnDel = document.createElement('button');
-                btnDel.textContent = '삭제';
-                btnDel.className = 'btn secondary btn-delete-row';
-                btnDel.dataset.id = item.id;
-                tdActions.appendChild(btnDel);
-                tr.appendChild(tdActions);
-
-                tbody.appendChild(tr);
-            });
-
-            summaryCount.textContent = String(items.length);
-            summaryIncome.textContent = formatNumber(incomeSum);
-            summaryExpense.textContent = formatNumber(expenseSum);
-
-            updateCharts(items);
-        }
-
-        function applyFilterAndRender() {
-            let items = allItems || [];
-            const month = monthFilter.value; // YYYY-MM
-
-            if (month) {
-                items = items.filter(it => (it.date || '').startsWith(month));
-            }
-
-            renderTable(items);
-            updateMonthlySummary(items, month);
-        }
-
-        async function fetchList() {
-            try {
-                const res = await fetch('/api/list?user=' + encodeURIComponent(currentUser));
-                const data = await res.json();
-                if (data.success) {
-                    allItems = data.items || [];
-                } else {
-                    allItems = [];
-                }
-            } catch (e) {
-                console.error(e);
+    async function fetchList() {
+        try {
+            const res = await fetch('/api/list?user=' + encodeURIComponent(currentUser));
+            const data = await res.json();
+            if (data.success) {
+                allItems = data.items || [];
+            } else {
                 allItems = [];
             }
-            applyFilterAndRender();
+        } catch (e) {
+            console.error(e);
+            allItems = [];
+        }
+        applyFilterAndRender();
+    }
+
+    async function handleSubmit(event) {
+        event.preventDefault();
+        clearError();
+
+        const date = dateInput.value;
+        const amount = amountInput.value;
+        const mainCategory = mainSelect.value;
+        const subCategory = subSelect.value;
+        const memo = memoInput.value.trim();
+
+        if (!date || !amount || !mainCategory || !subCategory || !memo) {
+            showError("모든 필드를 입력해 주세요.");
+            return;
         }
 
-        async function handleSubmit(event) {
-            event.preventDefault();
+        if (isNaN(Number(amount))) {
+            showError("금액은 숫자로 입력해 주세요.");
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8'
+                },
+                body: JSON.stringify({
+                    date: date,
+                    amount: amount,
+                    main_category: mainCategory,
+                    sub_category: subCategory,
+                    memo: memo,
+                    user: currentUser
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                showError(data.message || "저장 중 오류가 발생했습니다.");
+                return;
+            }
+
+            setToday();
+            amountInput.value = '';
+            memoInput.value = '';
+            mainSelect.value = '';
+            updateSubCategories();
             clearError();
 
-            const date = dateInput.value;
-            const amount = amountInput.value;
-            const mainCategory = mainSelect.value;
-            const subCategory = subSelect.value;
-            const memo = memoInput.value.trim();
+            await fetchList();
+        } catch (e) {
+            console.error(e);
+            showError("서버와 통신 중 오류가 발생했습니다.");
+        }
+    }
 
-            if (!date || !amount || !mainCategory || !subCategory || !memo) {
-                showError("모든 필드를 입력해 주세요.");
+    function downloadExcel() {
+        window.location.href = '/api/download?user=' + encodeURIComponent(currentUser);
+    }
+
+    async function deleteItem(id) {
+        try {
+            const res = await fetch('/api/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8'
+                },
+                body: JSON.stringify({
+                    id: id,
+                    user: currentUser
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                alert(data.message || '삭제 중 오류가 발생했습니다.');
+                return;
+            }
+            await fetchList();
+        } catch (e) {
+            console.error(e);
+            alert('서버와 통신 중 오류가 발생했습니다.');
+        }
+    }
+
+    async function clearEntriesForUser() {
+        if (!confirm(`현재 사용자(${currentUser})의 모든 내역을 삭제할까요?`)) return;
+        try {
+            const res = await fetch('/api/clear_entries', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8'
+                },
+                body: JSON.stringify({ user: currentUser })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                alert(data.message || '내역 전체 삭제 중 오류가 발생했습니다.');
+                return;
+            }
+            await fetchList();
+        } catch (e) {
+            console.error(e);
+            alert('서버와 통신 중 오류가 발생했습니다.');
+        }
+    }
+
+    async function deleteCurrentUser() {
+        if (currentUser === 'guest') {
+            if (!confirm('guest 사용자의 모든 내역을 삭제하고 초기화할까요?')) return;
+        } else {
+            if (!confirm(`사용자 "${currentUser}"와 그 사용자의 모든 내역을 삭제합니다. 계속할까요?`)) return;
+        }
+
+        try {
+            const res = await fetch('/api/delete_user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json;charset=utf-8'
+                },
+                body: JSON.stringify({ user: currentUser })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                alert(data.message || '사용자 삭제 중 오류가 발생했습니다.');
                 return;
             }
 
-            if (isNaN(Number(amount))) {
-                showError("금액은 숫자로 입력해 주세요.");
-                return;
-            }
-
-            try {
-                const res = await fetch('/api/add', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json;charset=utf-8'
-                    },
-                    body: JSON.stringify({
-                        date: date,
-                        amount: amount,
-                        main_category: mainCategory,
-                        sub_category: subCategory,
-                        memo: memo,
-                        user: currentUser
-                    })
-                });
-
-                const data = await res.json();
-
-                if (!res.ok || !data.success) {
-                    showError(data.message || "저장 중 오류가 발생했습니다.");
-                    return;
-                }
-
-                setToday();
-                amountInput.value = '';
-                memoInput.value = '';
-                mainSelect.value = '';
-                updateSubCategories();
-                clearError();
-
-                await fetchList();
-            } catch (e) {
-                console.error(e);
-                showError("서버와 통신 중 오류가 발생했습니다.");
-            }
-        }
-
-        function downloadExcel() {
-            window.location.href = '/api/download?user=' + encodeURIComponent(currentUser);
-        }
-
-        async function deleteItem(id) {
-            try {
-                const res = await fetch('/api/delete', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json;charset=utf-8'
-                    },
-                    body: JSON.stringify({
-                        id: id,
-                        user: currentUser
-                    })
-                });
-                const data = await res.json();
-                if (!res.ok || !data.success) {
-                    alert(data.message || '삭제 중 오류가 발생했습니다.');
-                    return;
-                }
-                await fetchList();
-            } catch (e) {
-                console.error(e);
-                alert('서버와 통신 중 오류가 발생했습니다.');
-            }
-        }
-
-        async function clearEntriesForUser() {
-            if (!confirm(`현재 사용자(${currentUser})의 모든 내역을 삭제할까요?`)) return;
-            try {
-                const res = await fetch('/api/clear_entries', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json;charset=utf-8'
-                    },
-                    body: JSON.stringify({ user: currentUser })
-                });
-                const data = await res.json();
-                if (!res.ok || !data.success) {
-                    alert(data.message || '내역 전체 삭제 중 오류가 발생했습니다.');
-                    return;
-                }
-                await fetchList();
-            } catch (e) {
-                console.error(e);
-                alert('서버와 통신 중 오류가 발생했습니다.');
-            }
-        }
-
-        async function deleteCurrentUser() {
-            if (currentUser === 'guest') {
-                if (!confirm('guest 사용자의 모든 내역을 삭제하고 초기화할까요?')) return;
-            } else {
-                if (!confirm(`사용자 "${currentUser}"와 그 사용자의 모든 내역을 삭제합니다. 계속할까요?`)) return;
-            }
-
-            try {
-                const res = await fetch('/api/delete_user', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json;charset=utf-8'
-                    },
-                    body: JSON.stringify({ user: currentUser })
-                });
-                const data = await res.json();
-                if (!res.ok || !data.success) {
-                    alert(data.message || '사용자 삭제 중 오류가 발생했습니다.');
-                    return;
-                }
-
-                localStorage.removeItem('accountBookUser');
-                currentUser = 'guest';
-                currentUserLabel.textContent = currentUser;
-                await fetchList();
-            } catch (e) {
-                console.error(e);
-                alert('서버와 통신 중 오류가 발생했습니다.');
-            }
-        }
-
-        function initUser() {
-            const saved = localStorage.getItem('accountBookUser');
-            currentUser = saved && saved.trim() ? saved.trim() : 'guest';
+            localStorage.removeItem('accountBookUser');
+            currentUser = 'guest';
             currentUserLabel.textContent = currentUser;
+            await fetchList();
+        } catch (e) {
+            console.error(e);
+            alert('서버와 통신 중 오류가 발생했습니다.');
         }
+    }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            initUser();
-            setToday();
-            updateSubCategories();
-            fetchList();
+    function initUser() {
+        const saved = localStorage.getItem('accountBookUser');
+        currentUser = saved && saved.trim() ? saved.trim() : 'guest';
+        currentUserLabel.textContent = currentUser;
+    }
 
-            mainSelect.addEventListener('change', updateSubCategories);
-            form.addEventListener('submit', handleSubmit);
+    document.addEventListener('DOMContentLoaded', () => {
+        initUser();
+        setToday();
+        updateSubCategories();
+        fetchList();
 
-            btnDownloadTop.addEventListener('click', downloadExcel);
-            btnDownloadBottom.addEventListener('click', downloadExcel);
+        mainSelect.addEventListener('change', updateSubCategories);
+        form.addEventListener('submit', handleSubmit);
 
-            monthFilter.addEventListener('change', applyFilterAndRender);
-            btnClearFilter.addEventListener('click', () => {
-                monthFilter.value = '';
-                applyFilterAndRender();
-            });
+        btnDownloadTop.addEventListener('click', downloadExcel);
+        btnDownloadBottom.addEventListener('click', downloadExcel);
 
-            btnChangeUser.addEventListener('click', () => {
-                const name = prompt('사용자 이름을 입력하세요.', currentUser);
-                if (!name) return;
-                const trimmed = name.trim();
-                if (!trimmed) return;
-                currentUser = trimmed;
-                localStorage.setItem('accountBookUser', currentUser);
-                currentUserLabel.textContent = currentUser;
-                fetchList();
-            });
-
-            btnDeleteUser.addEventListener('click', deleteCurrentUser);
-            btnClearEntries.addEventListener('click', clearEntriesForUser);
-
-            tbody.addEventListener('click', (event) => {
-                const target = event.target;
-                if (target.classList.contains('btn-delete-row')) {
-                    const id = Number(target.dataset.id);
-                    if (!id) return;
-                    if (!confirm('이 항목을 삭제할까요?')) return;
-                    deleteItem(id);
-                }
-            });
+        monthFilter.addEventListener('change', applyFilterAndRender);
+        btnClearFilter.addEventListener('click', () => {
+            monthFilter.value = '';
+            applyFilterAndRender();
         });
-    </script>
-</body>
 
-</html>
-p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.amount-expense {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: #dc2626;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-weight: 600;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.text-muted {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: var(--text-sub);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.no-data {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>text-align: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 14px 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: var(--text-sub);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>@media (max-width: 760px) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>form {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>grid-template-columns: repeat(2, minmax(0, 1fr));</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>@media (max-width: 520px) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>form {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>grid-template-columns: 1fr;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>header {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>flex-direction: column;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>align-items: flex-start;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p1">&lt;div class="wrapper"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;header&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;h1&gt;&lt;span class="logo-dot"&gt;&lt;/span&gt; 가계부&lt;/h1&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;p class="subtitle"&gt;수입·지출을 간단하게 기록하고 엑셀로 관리하세요.&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;button class="btn secondary" id="btn-download-top"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>⬇️ 엑셀 다운로드</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/header&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- 입력 카드 --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;section class="card"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="card-header"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;h2&gt;내역 입력&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;form id="account-form"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="form-group"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;label for="date"&gt;날짜&lt;/label&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;input type="date" id="date" required&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="form-group"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;label for="amount"&gt;금액&lt;/label&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;input type="number" id="amount" min="0" placeholder="예: 12000" required&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="form-group"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;label for="main-category"&gt;대분류&lt;/label&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;select id="main-category" required&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;option value=""&gt;선택하세요&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;option value="수입"&gt;수입&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;option value="지출"&gt;지출&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/select&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="form-group"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;label for="sub-category"&gt;소분류&lt;/label&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;select id="sub-category" required&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;option value=""&gt;대분류를 먼저 선택하세요&lt;/option&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/select&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="form-group" style="grid-column: span 3;"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;label for="memo"&gt;내용 (메모)&lt;/label&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;input type="text" id="memo" placeholder="예: 점심 식사, 월급, 교통비 등" required&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="form-group form-actions"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;button type="submit" class="btn"&gt;➕ 내역 추가&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="error-message" id="form-error" style="display:none;"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/form&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/section&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- 리스트 카드 --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;section class="card"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="card-header"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;h2&gt;내역 목록&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;button class="btn secondary" id="btn-download-bottom"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>⬇️ 엑셀 다운로드</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="summary-bar"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div&gt;총 건수: &lt;strong id="summary-count"&gt;0&lt;/strong&gt; 건&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>수입 합계: &lt;strong id="summary-income"&gt;0&lt;/strong&gt; 원 ·</p>
-<p class="p1"><span class="Apple-converted-space">                </span>지출 합계: &lt;strong id="summary-expense"&gt;0&lt;/strong&gt; 원</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div style="overflow-x:auto;"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;table&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;thead&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;tr&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;th&gt;날짜&lt;/th&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;th&gt;대분류&lt;/th&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;th&gt;소분류&lt;/th&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;th&gt;금액&lt;/th&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;th&gt;내용&lt;/th&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/tr&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/thead&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;tbody id="table-body"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;tr class="no-data-row"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;td colspan="5" class="no-data"&gt;아직 저장된 내역이 없습니다.&lt;/td&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/tr&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/tbody&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/table&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/section&gt;</p>
-<p class="p1">&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const categories = {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>"수입": ["월급", "용돈", "보너스", "이자소득", "기타수입"],</p>
-<p class="p1"><span class="Apple-converted-space">        </span>"지출": ["식비", "교통", "주거", "통신", "쇼핑", "문화생활", "교육", "의료/건강", "기타지출"]</p>
-<p class="p1"><span class="Apple-converted-space">    </span>};</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>const form = document.getElementById('account-form');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const dateInput = document.getElementById('date');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const amountInput = document.getElementById('amount');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const mainSelect = document.getElementById('main-category');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const subSelect = document.getElementById('sub-category');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const memoInput = document.getElementById('memo');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const errorBox = document.getElementById('form-error');</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>const tbody = document.getElementById('table-body');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const summaryCount = document.getElementById('summary-count');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const summaryIncome = document.getElementById('summary-income');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const summaryExpense = document.getElementById('summary-expense');</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>const btnDownloadTop = document.getElementById('btn-download-top');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const btnDownloadBottom = document.getElementById('btn-download-bottom');</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 오늘 날짜 기본값 설정</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function setToday() {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const today = new Date();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const yyyy = today.getFullYear();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const mm = String(today.getMonth() + 1).padStart(2, '0');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const dd = String(today.getDate()).padStart(2, '0');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>dateInput.value = `${yyyy}-${mm}-${dd}`;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function updateSubCategories() {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const mainValue = mainSelect.value;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>subSelect.innerHTML = "";</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (!mainValue || !categories[mainValue]) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const opt = document.createElement('option');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>opt.value = "";</p>
-<p class="p1"><span class="Apple-converted-space">            </span>opt.textContent = "대분류를 먼저 선택하세요";</p>
-<p class="p1"><span class="Apple-converted-space">            </span>subSelect.appendChild(opt);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>const defaultOpt = document.createElement('option');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>defaultOpt.value = "";</p>
-<p class="p1"><span class="Apple-converted-space">        </span>defaultOpt.textContent = "소분류 선택";</p>
-<p class="p1"><span class="Apple-converted-space">        </span>subSelect.appendChild(defaultOpt);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>categories[mainValue].forEach(cat =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const opt = document.createElement('option');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>opt.value = cat;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>opt.textContent = cat;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>subSelect.appendChild(opt);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>});</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function clearError() {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>errorBox.style.display = 'none';</p>
-<p class="p1"><span class="Apple-converted-space">        </span>errorBox.textContent = '';</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function showError(msg) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>errorBox.textContent = msg;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>errorBox.style.display = 'block';</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function formatNumber(num) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const n = Number(num) || 0;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>return n.toLocaleString('ko-KR');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function renderTable(items) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>tbody.innerHTML = "";</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (!items || items.length === 0) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const tr = document.createElement('tr');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>tr.classList.add('no-data-row');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const td = document.createElement('td');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>td.colSpan = 5;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>td.className = 'no-data';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>td.textContent = '아직 저장된 내역이 없습니다.';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>tr.appendChild(td);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>tbody.appendChild(tr);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>summaryCount.textContent = '0';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>summaryIncome.textContent = '0';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>summaryExpense.textContent = '0';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>let incomeSum = 0;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let expenseSum = 0;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// 날짜 오름차순 정렬</p>
-<p class="p1"><span class="Apple-converted-space">        </span>items.sort((a, b) =&gt; (a.date || "").localeCompare(b.date || ""));</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>items.forEach(item =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const tr = document.createElement('tr');</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>const tdDate = document.createElement('td');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>tdDate.textContent = item.date || '';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>tr.appendChild(tdDate);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>const tdMain = document.createElement('td');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>tdMain.textContent = item.main_category || '';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>tr.appendChild(tdMain);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>const tdSub = document.createElement('td');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>tdSub.textContent = item.sub_category || '';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>tr.appendChild(tdSub);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>const tdAmount = document.createElement('td');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const amount = Number(item.amount) || 0;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (item.main_category === '수입') {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>incomeSum += amount;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>tdAmount.classList.add('amount-income');</p>
-<p class="p1"><span class="Apple-converted-space">                </span>tdAmount.textContent = '+' + formatNumber(amount);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>} else if (item.main_category === '지출') {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>expenseSum += amount;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>tdAmount.classList.add('amount-expense');</p>
-<p class="p1"><span class="Apple-converted-space">                </span>tdAmount.textContent = '-' + formatNumber(amount);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>tdAmount.textContent = formatNumber(amount);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>tr.appendChild(tdAmount);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>const tdMemo = document.createElement('td');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>tdMemo.textContent = item.memo || '';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>tr.appendChild(tdMemo);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>tbody.appendChild(tr);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>summaryCount.textContent = String(items.length);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>summaryIncome.textContent = formatNumber(incomeSum);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>summaryExpense.textContent = formatNumber(expenseSum);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>async function fetchList() {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>try {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const res = await fetch('/api/list');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const data = await res.json();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (data.success) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>renderTable(data.items);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>renderTable([]);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>} catch (e) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>console.error(e);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>renderTable([]);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>async function handleSubmit(event) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>event.preventDefault();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>clearError();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>const date = dateInput.value;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const amount = amountInput.value;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const mainCategory = mainSelect.value;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const subCategory = subSelect.value;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const memo = memoInput.value.trim();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (!date || !amount || !mainCategory || !subCategory || !memo) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>showError("모든 필드를 입력해 주세요.");</p>
-<p class="p1"><span class="Apple-converted-space">            </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (isNaN(Number(amount))) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>showError("금액은 숫자로 입력해 주세요.");</p>
-<p class="p1"><span class="Apple-converted-space">            </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>try {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const res = await fetch('/api/add', {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>method: 'POST',</p>
-<p class="p1"><span class="Apple-converted-space">                </span>headers: {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>'Content-Type': 'application/json;charset=utf-8'</p>
-<p class="p1"><span class="Apple-converted-space">                </span>},</p>
-<p class="p1"><span class="Apple-converted-space">                </span>body: JSON.stringify({</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>date: date,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>amount: amount,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>main_category: mainCategory,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>sub_category: subCategory,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>memo: memo</p>
-<p class="p1"><span class="Apple-converted-space">                </span>})</p>
-<p class="p1"><span class="Apple-converted-space">            </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>const data = await res.json();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (!res.ok || !data.success) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>showError(data.message || "저장 중 오류가 발생했습니다.");</p>
-<p class="p1"><span class="Apple-converted-space">                </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// 폼 초기화 (날짜는 오늘로, 나머지는 비우기)</p>
-<p class="p1"><span class="Apple-converted-space">            </span>setToday();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>amountInput.value = '';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>memoInput.value = '';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>mainSelect.value = '';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>updateSubCategories();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>clearError();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>await fetchList();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>} catch (e) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>console.error(e);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>showError("서버와 통신 중 오류가 발생했습니다.");</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function downloadExcel() {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>// 단순히 링크 이동으로 다운로드</p>
-<p class="p1"><span class="Apple-converted-space">        </span>window.location.href = '/api/download';</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>document.addEventListener('DOMContentLoaded', () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>setToday();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>updateSubCategories();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>fetchList();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>mainSelect.addEventListener('change', updateSubCategories);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>form.addEventListener('submit', handleSubmit);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>btnDownloadTop.addEventListener('click', downloadExcel);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>btnDownloadBottom.addEventListener('click', downloadExcel);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>});</p>
-<p class="p1">&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+        btnChangeUser.addEventListener('click', () => {
+            const name = prompt('사용자 이름을 입력하세요.', currentUser);
+            if (!name) return;
+            const trimmed = name.trim();
+            if (!trimmed) return;
+            currentUser = trimmed;
+            localStorage.setItem('accountBookUser', currentUser);
+            currentUserLabel.textContent = currentUser;
+            fetchList();
+        });
+
+        btnDeleteUser.addEventListener('click', deleteCurrentUser);
+        btnClearEntries.addEventListener('click', clearEntriesForUser);
+
+        tbody.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target.classList.contains('btn-delete-row')) {
+                const id = Number(target.dataset.id);
+                if (!id) return;
+                if (!confirm('이 항목을 삭제할까요?')) return;
+                deleteItem(id);
+            }
+        });
+    });
+</script>
 </body>
 </html>
+
