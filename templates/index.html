@@ -386,13 +386,8 @@
             }
         }
 
-        /* 작은 폰: 1칸 + 월 선택 / 전체 보기 모양 이전처럼 */
+        /* 작은 폰: 1칸 + 월 선택/전체보기 + 입력폼 세로 정렬 */
         @media (max-width: 520px) {
-            /* 입력 폼 1칸 */
-            form {
-                grid-template-columns: 1fr;
-            }
-
             header {
                 flex-direction: column;
                 align-items: flex-start;
@@ -410,32 +405,34 @@
                 gap: 4px;
             }
 
-            /* CSV 줄 세로 */
             .csv-row {
                 flex-direction: column;
                 align-items: flex-start;
             }
 
-            /* 조회 기간: 월 선택은 전체 폭, 전체보기는 작은 pill 버튼 */
+            /* 조회 기간: 월 선택은 180px, 전체보기는 아래 pill 버튼 */
             .filter-row {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 6px;
             }
-            .filter-field {
-                width: auto;
-            }
-            .filter-field:first-child {
-                width: 100%;      /* 월 선택 칸만 100% */
-            }
-            .filter-field input[type="month"] {
-                width: 100%;
+            .filter-field:first-child input[type="month"] {
+                width: 180px;
             }
             #btn-clear-filter {
-                width: auto;      /* 버튼은 내용만큼만 */
+                width: auto;
                 justify-content: center;
                 text-align: center;
                 align-self: flex-start;
+            }
+
+            /* 내역 입력 폼: 한 줄씩 세로 */
+            #account-form {
+                display: block;
+            }
+            #account-form .form-group {
+                width: 100%;
+                margin-bottom: 10px;
             }
         }
     </style>
