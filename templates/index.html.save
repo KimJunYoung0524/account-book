@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
         :root {
             --bg: #f5f7fb;
@@ -18,11 +17,7 @@
             --text-sub: #6b7280;
             --danger: #ef4444;
         }
-
-        * {
-            box-sizing: border-box;
-        }
-
+        * { box-sizing: border-box; }
         body {
             margin: 0;
             padding: 0;
@@ -30,15 +25,11 @@
             background-color: var(--bg);
             color: var(--text-main);
         }
-
         .wrapper {
             max-width: 1000px;
             margin: 24px auto;
             padding: 0 16px 32px;
         }
-
-        /* 헤더 */
-
         header {
             display: flex;
             align-items: center;
@@ -46,7 +37,6 @@
             margin-bottom: 16px;
             gap: 8px;
         }
-
         header h1 {
             font-size: 1.4rem;
             margin: 0;
@@ -54,7 +44,6 @@
             align-items: center;
             gap: 8px;
         }
-
         header h1 span.logo-dot {
             width: 8px;
             height: 8px;
@@ -62,9 +51,8 @@
             background: var(--accent);
             display: inline-block;
         }
-
         header .subtitle {
-            margin: 0;
+            margin: 4px 0 0;
             font-size: 0.85rem;
             color: var(--text-sub);
         }
@@ -76,22 +64,40 @@
             gap: 6px;
             font-size: 0.8rem;
         }
-
         .header-user-text {
-            color: var(--text-sub);
+            text-align: right;
         }
-
         .header-user-text strong {
             color: var(--text-main);
         }
-
+        .admin-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            background: var(--accent-light);
+            color: var(--accent);
+            margin-left: 4px;
+        }
         .header-buttons {
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
+            justify-content: flex-end;
         }
-
-        /* 카드 공통 */
+        .header-admin-panel {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: var(--text-sub);
+        }
+        .header-admin-panel select {
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            padding: 4px 8px;
+            font-size: 0.8rem;
+        }
 
         .card {
             background-color: var(--card-bg);
@@ -101,20 +107,16 @@
             border: 1px solid var(--border);
             margin-bottom: 16px;
         }
-
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
         }
-
         .card-header h2 {
             margin: 0;
             font-size: 1rem;
         }
-
-        /* 버튼 */
 
         .btn {
             border: none;
@@ -127,78 +129,61 @@
             gap: 6px;
             background-color: var(--accent);
             color: #fff;
+            white-space: nowrap;
         }
-
         .btn.secondary {
             background-color: var(--accent-light);
             color: var(--accent);
         }
-
         .btn.danger {
             background-color: var(--danger);
             color: #fff;
         }
-
         .btn:active {
             transform: translateY(1px);
         }
 
-        .btn-icon {
-            margin-right: 4px;
-        }
-
-        /* 폼 */
-
+        /* PC 기본: 4칸 그리드 */
         form {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 10px 12px;
             align-items: flex-end;
         }
-
         .form-group {
             display: flex;
             flex-direction: column;
             gap: 4px;
             font-size: 0.85rem;
         }
-
         label {
             color: var(--text-sub);
         }
-
         input[type="date"],
         input[type="number"],
         input[type="text"],
-        select,
-        input[type="month"] {
+        input[type="month"],
+        select {
             border-radius: 10px;
             border: 1px solid var(--border);
-            padding: 9px 10px;
+            padding: 7px 9px;
             font-size: 0.9rem;
             width: 100%;
             outline: none;
-            box-sizing: border-box;
-            height: 44px; /* 네 개 필드(날짜, 금액, 대분류, 소분류) 두께 맞추기 */
         }
-
         input:focus,
         select:focus {
             border-color: var(--accent);
             box-shadow: 0 0 0 1px var(--accent-light);
         }
-
         .form-actions {
             text-align: right;
         }
-
         .error-message {
             color: var(--danger);
             font-size: 0.8rem;
             margin-top: 4px;
         }
-
-        /* 요약 / 테이블 */
 
         .summary-bar {
             display: flex;
@@ -208,7 +193,6 @@
             font-size: 0.85rem;
             color: var(--text-sub);
         }
-
         .summary-bar strong {
             color: var(--text-main);
         }
@@ -218,54 +202,43 @@
             border-collapse: collapse;
             font-size: 0.85rem;
         }
-
         thead {
             background-color: #f9fafb;
         }
-
         th, td {
             padding: 8px 6px;
             border-bottom: 1px solid var(--border);
             text-align: left;
             white-space: nowrap;
         }
-
         th:last-child,
         td:last-child {
             white-space: nowrap;
         }
-
         th {
             font-weight: 600;
             color: var(--text-sub);
         }
-
         tbody tr:hover {
             background-color: #f3f4ff;
         }
-
-        .amount-income {
-            color: #16a34a;
-            font-weight: 600;
-        }
-
-        .amount-expense {
-            color: #dc2626;
-            font-weight: 600;
-        }
-
         .no-data {
             text-align: center;
             padding: 14px 0;
             color: var(--text-sub);
         }
-
+        .amount-income {
+            color: #16a34a;
+            font-weight: 600;
+        }
+        .amount-expense {
+            color: #dc2626;
+            font-weight: 600;
+        }
         .btn-delete-row {
             padding: 4px 10px;
             font-size: 0.75rem;
         }
-
-        /* 필터 (월 선택) */
 
         .filter-row {
             display: flex;
@@ -274,73 +247,34 @@
             align-items: center;
             font-size: 0.85rem;
         }
-
         .filter-field {
             display: flex;
             flex-direction: column;
             gap: 4px;
         }
-
         .filter-hint {
             margin: 0;
             color: var(--text-sub);
             font-size: 0.8rem;
         }
 
-        /* 요약 카드 */
-
-        .month-summary-body {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            font-size: 0.85rem;
-        }
-
-        .month-summary-numbers {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .month-summary-numbers span strong {
-            color: var(--text-main);
-        }
-
-        .month-top-expense-list {
-            margin: 4px 0 0;
-            padding-left: 18px;
-            font-size: 0.8rem;
-        }
-
-        .month-summary-text {
-            margin: 0;
-            color: var(--text-sub);
-            font-size: 0.8rem;
-        }
-
-        /* 그래프 */
-
         .chart-container {
             display: flex;
             flex-wrap: wrap;
             gap: 16px;
         }
-
         .chart-box {
             flex: 1 1 260px;
         }
-
         .chart-title {
             font-size: 0.9rem;
             margin-bottom: 6px;
             color: var(--text-sub);
         }
-
         canvas {
             max-width: 100%;
             max-height: 280px;
         }
-
         .chart-empty-text {
             font-size: 0.8rem;
             color: var(--text-sub);
@@ -348,7 +282,30 @@
             margin-top: 4px;
         }
 
-        /* CSV 업로드 */
+        .month-summary-body {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+        .month-summary-numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .month-summary-numbers span strong {
+            color: var(--text-main);
+        }
+        .month-top-expense-list {
+            margin: 4px 0 0;
+            padding-left: 18px;
+            font-size: 0.8rem;
+        }
+        .month-summary-text {
+            margin: 0;
+            color: var(--text-sub);
+            font-size: 0.8rem;
+        }
 
         .csv-row {
             display: flex;
@@ -357,91 +314,79 @@
             align-items: center;
             font-size: 0.85rem;
         }
-
         .csv-row input[type="file"] {
             font-size: 0.8rem;
         }
-
-        .csv-help {
-            font-size: 0.8rem;
-            color: var(--text-sub);
-            margin-top: 4px;
+        .csv-select-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
-        /* 사용자 변경 모달 */
-
+        /* 로그인 모달 */
         .modal-backdrop {
             position: fixed;
             inset: 0;
             background: rgba(15, 23, 42, 0.35);
             display: none;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             z-index: 50;
         }
-
-        .modal-backdrop.show {
-            display: flex;
-        }
-
         .modal {
             background: #fff;
             border-radius: 16px;
-            padding: 20px 20px 16px;
-            max-width: 320px;
-            width: 90%;
-            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+            padding: 16px 18px 18px;
+            width: 96%;
+            max-width: 360px;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18);
+            border: 1px solid var(--border);
         }
-
-        .modal-title {
-            margin: 0 0 8px;
+        .modal-header {
             font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
         }
-
-        .modal-desc {
-            margin: 0 0 12px;
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+        .modal-body label {
             font-size: 0.8rem;
-            color: var(--text-sub);
         }
-
-        .modal-actions {
+        .modal-footer {
             display: flex;
             justify-content: flex-end;
             gap: 8px;
-            margin-top: 10px;
+            margin-top: 12px;
         }
-
-        .modal input[type="text"],
-        .modal input[type="password"] {
+        .modal-input {
             border-radius: 10px;
             border: 1px solid var(--border);
-            padding: 8px 9px;
+            padding: 7px 9px;
             font-size: 0.9rem;
             width: 100%;
             outline: none;
         }
-
-        .modal input:focus {
+        .modal-input:focus {
             border-color: var(--accent);
             box-shadow: 0 0 0 1px var(--accent-light);
         }
-
-        .modal-label {
+        .text-danger {
+            color: var(--danger);
             font-size: 0.8rem;
-            color: var(--text-sub);
-            margin-bottom: 4px;
         }
 
-        /* 반응형 */
-
-        /* 태블릿: 폼 2칸 */
-        @media (max-width: 760px) {
+        /* 태블릿: 2칸 */
+        @media (max-width: 900px) {
             form {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
 
-        /* 작은 폰: 폼 한 줄씩 세로, 월 선택/전체보기 세로 정렬 */
+        /* 작은 폰: 1칸 + 월 선택/전체보기 + 입력폼 세로 정렬 */
         @media (max-width: 520px) {
             header {
                 flex-direction: column;
@@ -465,16 +410,15 @@
                 align-items: flex-start;
             }
 
+            /* 조회 기간: 월 선택은 180px, 전체보기는 아래 pill 버튼 */
             .filter-row {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 6px;
             }
-
             .filter-field:first-child input[type="month"] {
                 width: 180px;
             }
-
             #btn-clear-filter {
                 width: auto;
                 justify-content: center;
@@ -482,11 +426,12 @@
                 align-self: flex-start;
             }
 
+            /* 내역 입력 폼: 한 줄씩 세로 */
             #account-form {
                 display: block;
             }
-
-            #account-form .form-group {
+                width: 100%;
+        margin-bottom: 10px;    #account-form .form-group {
                 width: 100%;
                 margin-bottom: 10px;
             }
@@ -498,19 +443,26 @@
     <header>
         <div>
             <h1><span class="logo-dot"></span> 가계부</h1>
-            <p class="subtitle">수입·지출을 간단하게 기록하고 엑셀로 관리하세요.</p>
+            <p class="subtitle">수입·지출을 간단하게 기록하고 엑셀과 CSV로 관리하세요.</p>
         </div>
         <div class="header-right">
             <div class="header-user-text">
-                현재 사용자: <strong id="current-user-label">guest</strong>
-                <span id="role-label" style="font-size:0.75rem;color:#4f46e5;margin-left:4px;"></span>
+                <div>
+                    로그인: <strong id="login-user-label">guest</strong>
+                    <span id="admin-badge" class="admin-badge" style="display:none;">관리자</span>
+                </div>
+                <div>
+                    조회 사용자: <strong id="current-user-label">guest</strong>
+                </div>
+            </div>
+            <div id="admin-panel" class="header-admin-panel" style="display:none;">
+                <span>관리자 모드 · 조회 사용자</span>
+                <select id="admin-user-select"></select>
             </div>
             <div class="header-buttons">
                 <button class="btn secondary" id="btn-change-user">사용자 변경</button>
                 <button class="btn danger" id="btn-delete-user">사용자 삭제</button>
-                <button class="btn secondary" id="btn-download-top">
-                    <span class="btn-icon">⬇️</span> 엑셀 다운로드
-                </button>
+                <button class="btn secondary" id="btn-download-top">⬇️ 엑셀 다운로드</button>
             </div>
         </div>
     </header>
@@ -529,9 +481,7 @@
                 <label>&nbsp;</label>
                 <button class="btn secondary" id="btn-clear-filter">전체 보기</button>
             </div>
-            <p class="filter-hint">
-                선택한 월 기준으로 목록, 합계, 요약, 그래프가 모두 필터링됩니다. (미선택 시 전체)
-            </p>
+            <p class="filter-hint">선택한 월 기준으로 목록, 합계, 요약, 그래프가 모두 필터링됩니다. (미선택 시 전체)</p>
         </div>
     </section>
 
@@ -554,7 +504,7 @@
         </div>
     </section>
 
-    <!-- 내역 입력 -->
+    <!-- 입력 -->
     <section class="card">
         <div class="card-header">
             <h2>내역 입력</h2>
@@ -593,33 +543,15 @@
         </form>
     </section>
 
-    <!-- CSV 업로드 -->
-    <section class="card">
-        <div class="card-header">
-            <h2>계좌 CSV 업로드</h2>
-        </div>
-        <div class="csv-row">
-            <input type="file" id="csv-file" accept=".csv">
-            <button class="btn secondary" id="btn-import-csv">CSV에서 불러오기</button>
-        </div>
-        <p class="csv-help">
-            KB국민은행 앱에서 내려받은 거래내역 CSV를 업로드하면 날짜·금액·메모를 자동으로 가계부에 추가합니다.
-        </p>
-        <div class="error-message" id="csv-error" style="display:none;"></div>
-    </section>
-
-    <!-- 내역 목록 -->
+    <!-- 목록 -->
     <section class="card">
         <div class="card-header">
             <h2>내역 목록</h2>
             <div class="header-buttons">
                 <button class="btn secondary" id="btn-clear-entries">내역 전체 삭제</button>
-                <button class="btn secondary" id="btn-download-bottom">
-                    ⬇️ 엑셀 다운로드
-                </button>
+                <button class="btn secondary" id="btn-download-bottom">⬇️ 엑셀 다운로드</button>
             </div>
         </div>
-
         <div class="summary-bar">
             <div>총 건수: <strong id="summary-count">0</strong> 건</div>
             <div>
@@ -627,7 +559,6 @@
                 지출 합계: <strong id="summary-expense">0</strong> 원
             </div>
         </div>
-
         <div style="overflow-x:auto;">
             <table>
                 <thead>
@@ -649,7 +580,7 @@
         </div>
     </section>
 
-    <!-- 그래프 요약 -->
+    <!-- 그래프 -->
     <section class="card">
         <div class="card-header">
             <h2>그래프 요약</h2>
@@ -671,50 +602,69 @@
             </div>
         </div>
     </section>
+
+    <!-- CSV 업로드 -->
+    <section class="card">
+        <div class="card-header">
+            <h2>CSV 업로드 (은행 내역 가져오기)</h2>
+        </div>
+        <div class="csv-row">
+            <input type="file" id="csv-file" accept=".csv">
+            <div class="csv-select-group">
+                <div class="form-group" style="min-width:120px;">
+                    <label for="csv-main-category">기본 대분류</label>
+                    <select id="csv-main-category">
+                        <option value="지출">지출</option>
+                        <option value="수입">수입</option>
+                    </select>
+                </div>
+                <div class="form-group" style="min-width:120px;">
+                    <label for="csv-sub-category">기본 소분류</label>
+                    <input type="text" id="csv-sub-category" value="기타지출">
+                </div>
+            </div>
+            <button class="btn secondary" id="btn-upload-csv">CSV 업로드</button>
+        </div>
+        <small>국민은행 CSV(앱/웹 내역 다운로드)와 일반 CSV를 자동으로 인식합니다.</small>
+        <div id="csv-message" class="month-summary-text" style="margin-top:6px;"></div>
+    </section>
 </div>
 
-<!-- 사용자 변경 모달 -->
-<div class="modal-backdrop" id="user-modal-backdrop">
+<!-- 로그인 모달 -->
+<div class="modal-backdrop" id="login-modal-backdrop">
     <div class="modal">
-        <h3 class="modal-title">사용자 변경</h3>
-        <p class="modal-desc">
-            이름과 비밀번호를 입력해 주세요.<br>
-            처음 입력한 이름+비밀번호 조합은 새 사용자로 등록됩니다.
-        </p>
-
-        <div class="form-group" style="margin-bottom:8px;">
-            <div class="modal-label">이름</div>
-            <input type="text" id="modal-username" placeholder="예: 김준영">
+        <div class="modal-header">사용자 로그인 / 변경</div>
+        <div class="modal-body">
+            <div>
+                <label for="login-username-input">사용자 이름</label>
+                <input type="text" id="login-username-input" class="modal-input" placeholder="예: 김준영, guest 등">
+            </div>
+            <div>
+                <label for="login-password-input">비밀번호</label>
+                <input type="password" id="login-password-input" class="modal-input" placeholder="비밀번호를 입력하세요">
+            </div>
+            <p class="text-danger" id="login-error" style="display:none;"></p>
+            <p class="month-summary-text" style="margin-top:4px;">
+                처음 입력한 이름+비밀번호 조합은 새 사용자로 등록됩니다.
+            </p>
         </div>
-        <div class="form-group">
-            <div class="modal-label">비밀번호</div>
-            <input type="password" id="modal-password" placeholder="비밀번호">
-        </div>
-
-        <div class="error-message" id="modal-error" style="display:none;margin-top:6px;"></div>
-
-        <div class="modal-actions">
-            <button class="btn secondary" id="btn-modal-cancel">취소</button>
-            <button class="btn" id="btn-modal-ok">확인</button>
+        <div class="modal-footer">
+            <button class="btn secondary" id="login-cancel">취소</button>
+            <button class="btn" id="login-confirm">확인</button>
         </div>
     </div>
 </div>
 
 <script>
-    /* ---------- 카테고리 ---------- */
     const categories = {
         "수입": ["월급", "용돈", "보너스", "이자소득", "기타수입"],
         "지출": ["식비", "교통", "주거", "통신", "쇼핑", "문화생활", "교육", "의료/건강", "기타지출"]
     };
 
-    /* ---------- 전역 상태 ---------- */
+    let loginUser = 'guest';
     let currentUser = 'guest';
-    let isAdmin = false;  // 김준영 + 187904 일 때 true
-    let allItems = [];
-    let mainPieChart = null;
-    let expensePieChart = null;
+    let isAdmin = false;
 
-    /* ---------- DOM ---------- */
     const form = document.getElementById('account-form');
     const dateInput = document.getElementById('date');
     const amountInput = document.getElementById('amount');
@@ -730,7 +680,6 @@
 
     const btnDownloadTop = document.getElementById('btn-download-top');
     const btnDownloadBottom = document.getElementById('btn-download-bottom');
-    const btnClearEntries = document.getElementById('btn-clear-entries');
 
     const monthFilter = document.getElementById('month-filter');
     const btnClearFilter = document.getElementById('btn-clear-filter');
@@ -740,6 +689,16 @@
     const expenseChartCanvas = document.getElementById('expense-pie-chart');
     const expenseChartEmptyText = document.getElementById('expense-chart-empty');
 
+    const loginUserLabel = document.getElementById('login-user-label');
+    const currentUserLabel = document.getElementById('current-user-label');
+    const adminBadge = document.getElementById('admin-badge');
+    const adminPanel = document.getElementById('admin-panel');
+    const adminUserSelect = document.getElementById('admin-user-select');
+
+    const btnChangeUser = document.getElementById('btn-change-user');
+    const btnDeleteUser = document.getElementById('btn-delete-user');
+    const btnClearEntries = document.getElementById('btn-clear-entries');
+
     const monthSummaryLabel = document.getElementById('month-summary-label');
     const monthIncomeEl = document.getElementById('month-income');
     const monthExpenseEl = document.getElementById('month-expense');
@@ -747,22 +706,22 @@
     const monthTopList = document.getElementById('month-top-expense-list');
 
     const csvFileInput = document.getElementById('csv-file');
-    const btnImportCsv = document.getElementById('btn-import-csv');
-    const csvErrorBox = document.getElementById('csv-error');
+    const csvMainCategory = document.getElementById('csv-main-category');
+    const csvSubCategory = document.getElementById('csv-sub-category');
+    const btnUploadCsv = document.getElementById('btn-upload-csv');
+    const csvMessage = document.getElementById('csv-message');
 
-    const currentUserLabel = document.getElementById('current-user-label');
-    const roleLabel = document.getElementById('role-label');
-    const btnChangeUser = document.getElementById('btn-change-user');
-    const btnDeleteUser = document.getElementById('btn-delete-user');
+    const loginModalBackdrop = document.getElementById('login-modal-backdrop');
+    const loginUsernameInput = document.getElementById('login-username-input');
+    const loginPasswordInput = document.getElementById('login-password-input');
+    const loginError = document.getElementById('login-error');
+    const loginCancelBtn = document.getElementById('login-cancel');
+    const loginConfirmBtn = document.getElementById('login-confirm');
 
-    const userModalBackdrop = document.getElementById('user-modal-backdrop');
-    const modalUsernameInput = document.getElementById('modal-username');
-    const modalPasswordInput = document.getElementById('modal-password');
-    const modalError = document.getElementById('modal-error');
-    const btnModalOk = document.getElementById('btn-modal-ok');
-    const btnModalCancel = document.getElementById('btn-modal-cancel');
+    let allItems = [];
+    let mainPieChart = null;
+    let expensePieChart = null;
 
-    /* ---------- 유틸 ---------- */
     function setToday() {
         const today = new Date();
         const yyyy = today.getFullYear();
@@ -774,7 +733,6 @@
     function updateSubCategories() {
         const mainValue = mainSelect.value;
         subSelect.innerHTML = "";
-
         if (!mainValue || !categories[mainValue]) {
             const opt = document.createElement('option');
             opt.value = "";
@@ -782,12 +740,10 @@
             subSelect.appendChild(opt);
             return;
         }
-
         const defaultOpt = document.createElement('option');
         defaultOpt.value = "";
         defaultOpt.textContent = "소분류 선택";
         subSelect.appendChild(defaultOpt);
-
         categories[mainValue].forEach(cat => {
             const opt = document.createElement('option');
             opt.value = cat;
@@ -811,13 +767,10 @@
         return n.toLocaleString('ko-KR');
     }
 
-    /* ---------- 그래프 ---------- */
     function updateMainPieChart(items) {
-        const income = items
-            .filter(it => it.main_category === '수입')
+        const income = items.filter(it => it.main_category === '수입')
             .reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
-        const expense = items
-            .filter(it => it.main_category === '지출')
+        const expense = items.filter(it => it.main_category === '지출')
             .reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
 
         if (income === 0 && expense === 0) {
@@ -853,7 +806,7 @@
                     legend: { position: 'bottom' },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 const label = context.label || '';
                                 const value = context.parsed || 0;
                                 return `${label}: ${value.toLocaleString('ko-KR')}원`;
@@ -867,7 +820,6 @@
 
     function updateExpensePieChart(items) {
         const expenses = items.filter(it => it.main_category === '지출');
-
         if (!expenses.length) {
             if (expensePieChart) {
                 expensePieChart.destroy();
@@ -914,7 +866,7 @@
                     legend: { position: 'bottom' },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 const label = context.label || '';
                                 const value = context.parsed || 0;
                                 return `${label}: ${value.toLocaleString('ko-KR')}원`;
@@ -931,43 +883,36 @@
         updateExpensePieChart(items);
     }
 
-    /* ---------- 월 요약 ---------- */
     function updateMonthlySummary(items, monthValue) {
         let income = 0;
         let expense = 0;
-
         items.forEach(it => {
             const amt = Number(it.amount) || 0;
             if (it.main_category === '수입') income += amt;
             if (it.main_category === '지출') expense += amt;
         });
-
         monthIncomeEl.textContent = formatNumber(income);
         monthExpenseEl.textContent = formatNumber(expense);
         monthBalanceEl.textContent = formatNumber(income - expense);
-
         if (monthValue) {
             monthSummaryLabel.textContent = `${monthValue} 기준 요약입니다.`;
         } else {
             monthSummaryLabel.textContent = '전체 기간 기준 요약입니다.';
         }
-
         monthTopList.innerHTML = '';
-        const expenses = items.filter(it => it.main_category === '지출');
-        if (!expenses.length) {
+        const expensesList = items.filter(it => it.main_category === '지출');
+        if (!expensesList.length) {
             const li = document.createElement('li');
             li.textContent = '지출 내역이 없습니다.';
             monthTopList.appendChild(li);
             return;
         }
-
         const sums = {};
-        expenses.forEach(it => {
+        expensesList.forEach(it => {
             const key = it.sub_category || '기타';
             const amt = Number(it.amount) || 0;
             sums[key] = (sums[key] || 0) + amt;
         });
-
         const sorted = Object.entries(sums).sort((a, b) => b[1] - a[1]).slice(0, 3);
         sorted.forEach(([name, value]) => {
             const li = document.createElement('li');
@@ -976,10 +921,8 @@
         });
     }
 
-    /* ---------- 테이블 렌더링 ---------- */
     function renderTable(items) {
         tbody.innerHTML = "";
-
         if (!items || items.length === 0) {
             const tr = document.createElement('tr');
             tr.classList.add('no-data-row');
@@ -989,18 +932,15 @@
             td.textContent = '아직 저장된 내역이 없습니다.';
             tr.appendChild(td);
             tbody.appendChild(tr);
-
             summaryCount.textContent = '0';
             summaryIncome.textContent = '0';
             summaryExpense.textContent = '0';
-
             updateCharts([]);
             return;
         }
 
         let incomeSum = 0;
         let expenseSum = 0;
-
         items.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
 
         items.forEach(item => {
@@ -1020,7 +960,6 @@
 
             const tdAmount = document.createElement('td');
             const amount = Number(item.amount) || 0;
-
             if (item.main_category === '수입') {
                 incomeSum += amount;
                 tdAmount.classList.add('amount-income');
@@ -1052,23 +991,19 @@
         summaryCount.textContent = String(items.length);
         summaryIncome.textContent = formatNumber(incomeSum);
         summaryExpense.textContent = formatNumber(expenseSum);
-
         updateCharts(items);
     }
 
     function applyFilterAndRender() {
         let items = allItems || [];
-        const month = monthFilter.value; // YYYY-MM
-
+        const month = monthFilter.value;
         if (month) {
             items = items.filter(it => (it.date || '').startsWith(month));
         }
-
         renderTable(items);
         updateMonthlySummary(items, month);
     }
 
-    /* ---------- 서버 통신 ---------- */
     async function fetchList() {
         try {
             const res = await fetch('/api/list?user=' + encodeURIComponent(currentUser));
@@ -1099,7 +1034,6 @@
             showError("모든 필드를 입력해 주세요.");
             return;
         }
-
         if (isNaN(Number(amount))) {
             showError("금액은 숫자로 입력해 주세요.");
             return;
@@ -1108,33 +1042,27 @@
         try {
             const res = await fetch('/api/add', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json;charset=utf-8'
-                },
+                headers: { 'Content-Type': 'application/json;charset=utf-8' },
                 body: JSON.stringify({
-                    date,
-                    amount,
+                    date: date,
+                    amount: amount,
                     main_category: mainCategory,
                     sub_category: subCategory,
-                    memo,
+                    memo: memo,
                     user: currentUser
                 })
             });
-
             const data = await res.json();
-
             if (!res.ok || !data.success) {
                 showError(data.message || "저장 중 오류가 발생했습니다.");
                 return;
             }
-
             setToday();
             amountInput.value = '';
             memoInput.value = '';
             mainSelect.value = '';
             updateSubCategories();
             clearError();
-
             await fetchList();
         } catch (e) {
             console.error(e);
@@ -1150,10 +1078,8 @@
         try {
             const res = await fetch('/api/delete', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json;charset=utf-8'
-                },
-                body: JSON.stringify({ id, user: currentUser })
+                headers: { 'Content-Type': 'application/json;charset=utf-8' },
+                body: JSON.stringify({ id: id, user: currentUser })
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
@@ -1168,7 +1094,7 @@
     }
 
     async function clearEntriesForUser() {
-        if (!confirm(`현재 사용자(${currentUser})의 모든 내역을 삭제할까요?`)) return;
+        if (!confirm(`현재 조회 사용자(${currentUser})의 모든 내역을 삭제할까요?`)) return;
         try {
             const res = await fetch('/api/clear_entries', {
                 method: 'POST',
@@ -1188,8 +1114,11 @@
     }
 
     async function deleteCurrentUser() {
-        if (!confirm(`사용자 "${currentUser}"와 그 사용자의 모든 내역을 삭제합니다. 계속할까요?`)) return;
-
+        if (isAdmin && currentUser === loginUser) {
+            alert('현재 로그인한 관리자 계정은 삭제할 수 없습니다.');
+            return;
+        }
+        if (!confirm(`"${currentUser}" 사용자를 삭제하면 해당 사용자의 모든 내역도 삭제됩니다. 계속할까요?`)) return;
         try {
             const res = await fetch('/api/delete_user', {
                 method: 'POST',
@@ -1201,112 +1130,185 @@
                 alert(data.message || '사용자 삭제 중 오류가 발생했습니다.');
                 return;
             }
-
-            localStorage.removeItem('accountBookUser');
-            localStorage.removeItem('accountBookUserPassword');
-            currentUser = 'guest';
-            isAdmin = false;
-            updateUserLabels();
+            if (currentUser === loginUser) {
+                loginUser = 'guest';
+                currentUser = 'guest';
+                isAdmin = false;
+                localStorage.setItem('accountBookLoginUser', loginUser);
+                localStorage.setItem('accountBookViewUser', currentUser);
+                localStorage.setItem('accountBookIsAdmin', '0');
+            } else {
+                currentUser = loginUser;
+                localStorage.setItem('accountBookViewUser', currentUser);
+            }
+            updateUserUI();
             await fetchList();
+            if (isAdmin) {
+                await loadAdminUsers();
+            }
         } catch (e) {
             console.error(e);
             alert('서버와 통신 중 오류가 발생했습니다.');
         }
     }
 
-    async function importCsv() {
-        csvErrorBox.style.display = 'none';
-        csvErrorBox.textContent = '';
+    function updateUserUI() {
+        loginUserLabel.textContent = loginUser;
+        currentUserLabel.textContent = currentUser;
+        if (isAdmin) {
+            adminBadge.style.display = 'inline-block';
+            adminPanel.style.display = 'flex';
+        } else {
+            adminBadge.style.display = 'none';
+            adminPanel.style.display = 'none';
+        }
+    }
 
-        if (!csvFileInput.files || !csvFileInput.files.length) {
-            csvErrorBox.textContent = 'CSV 파일을 선택해 주세요.';
-            csvErrorBox.style.display = 'block';
+    async function loadAdminUsers() {
+        try {
+            const res = await fetch('/api/users_for_admin');
+            const data = await res.json();
+            if (!res.ok || !data.success) return;
+            const users = data.users || [];
+            adminUserSelect.innerHTML = '';
+            users.forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u;
+                opt.textContent = u;
+                adminUserSelect.appendChild(opt);
+            });
+            const found = users.includes(currentUser) ? currentUser : (users[0] || loginUser);
+            currentUser = found;
+            localStorage.setItem('accountBookViewUser', currentUser);
+            updateUserUI();
+            adminUserSelect.value = currentUser;
+            await fetchList();
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function handleCsvUpload() {
+        csvMessage.textContent = '';
+        const file = csvFileInput.files[0];
+        if (!file) {
+            csvMessage.textContent = 'CSV 파일을 선택해 주세요.';
             return;
         }
+        const defaultMain = csvMainCategory.value || '지출';
+        const defaultSub = csvSubCategory.value.trim() || '기타지출';
 
-        const file = csvFileInput.files[0];
-        const fd = new FormData();
-        fd.append('file', file);
-        fd.append('user', currentUser);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('user', currentUser);
+        formData.append('default_main', defaultMain);
+        formData.append('default_sub', defaultSub);
 
         try {
-            const res = await fetch('/api/import_csv', {
+            const res = await fetch('/api/import', {
                 method: 'POST',
-                body: fd
+                body: formData
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
-                csvErrorBox.textContent = data.message || 'CSV 처리 중 오류가 발생했습니다.';
-                csvErrorBox.style.display = 'block';
+                csvMessage.textContent = data.message || 'CSV 업로드 중 오류가 발생했습니다.';
                 return;
             }
-
+            csvMessage.textContent = `CSV에서 ${data.imported}건을 불러왔습니다.`;
             csvFileInput.value = '';
             await fetchList();
-            alert(`CSV에서 ${data.imported_count || 0}건을 불러왔습니다.`);
         } catch (e) {
             console.error(e);
-            csvErrorBox.textContent = '서버와 통신 중 오류가 발생했습니다.';
-            csvErrorBox.style.display = 'block';
+            csvMessage.textContent = '서버와 통신 중 오류가 발생했습니다.';
         }
     }
 
-    /* ---------- 사용자 / 관리자 ---------- */
     function initUser() {
-        const savedName = localStorage.getItem('accountBookUser') || 'guest';
-        const savedPassword = localStorage.getItem('accountBookUserPassword') || '';
-        currentUser = savedName;
-        isAdmin = (savedName === '김준영' && savedPassword === '187904');
-        updateUserLabels();
+        const savedLogin = localStorage.getItem('accountBookLoginUser');
+        const savedView = localStorage.getItem('accountBookViewUser');
+        const savedAdmin = localStorage.getItem('accountBookIsAdmin');
+        loginUser = savedLogin || 'guest';
+        isAdmin = savedAdmin === '1';
+        currentUser = savedView || loginUser;
+        updateUserUI();
     }
 
-    function updateUserLabels() {
-        currentUserLabel.textContent = currentUser;
-        if (isAdmin) {
-            roleLabel.textContent = '(관리자 모드)';
-        } else {
-            roleLabel.textContent = '';
-        }
+    function openLoginModal() {
+        loginError.style.display = 'none';
+        loginError.textContent = '';
+        loginUsernameInput.value = (loginUser === 'guest') ? '' : loginUser;
+        loginPasswordInput.value = '';
+        loginModalBackdrop.style.display = 'flex';
+        (loginUsernameInput.value ? loginPasswordInput : loginUsernameInput).focus();
+    }
+    function closeLoginModal() {
+        loginModalBackdrop.style.display = 'none';
     }
 
-    function openUserModal() {
-        modalError.style.display = 'none';
-        modalError.textContent = '';
-        modalUsernameInput.value = currentUser === 'guest' ? '' : currentUser;
-        modalPasswordInput.value = '';
-        userModalBackdrop.classList.add('show');
-        setTimeout(() => modalUsernameInput.focus(), 10);
-    }
-
-    function closeUserModal() {
-        userModalBackdrop.classList.remove('show');
-    }
-
-    async function handleUserModalOk() {
-        const name = (modalUsernameInput.value || '').trim();
-        const pw = (modalPasswordInput.value || '').trim();
-
-        if (!name || !pw) {
-            modalError.textContent = '이름과 비밀번호를 모두 입력해 주세요.';
-            modalError.style.display = 'block';
+    async function submitLogin() {
+        const user = (loginUsernameInput.value || '').trim();
+        const password = loginPasswordInput.value || '';
+        if (!user || !password) {
+            loginError.textContent = '이름과 비밀번호를 모두 입력해 주세요.';
+            loginError.style.display = 'block';
             return;
         }
-
-        // 관리자 조건: 이름=김준영, 비밀번호=187904
-        const admin = (name === '김준영' && pw === '187904');
-
-        currentUser = name;
-        isAdmin = admin;
-
-        localStorage.setItem('accountBookUser', currentUser);
-        localStorage.setItem('accountBookUserPassword', pw);
-
-        updateUserLabels();
-        closeUserModal();
-        await fetchList();
+        try {
+            const res = await fetch('/api/user_login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json;charset=utf-8' },
+                body: JSON.stringify({ user, password })
+            });
+            const data = await res.json();
+            if (data.success) {
+                loginUser = user;
+                currentUser = user;
+                isAdmin = !!data.is_admin;
+                localStorage.setItem('accountBookLoginUser', loginUser);
+                localStorage.setItem('accountBookViewUser', currentUser);
+                localStorage.setItem('accountBookIsAdmin', isAdmin ? '1' : '0');
+                updateUserUI();
+                closeLoginModal();
+                await fetchList();
+                if (isAdmin) {
+                    await loadAdminUsers();
+                }
+                return;
+            }
+            if (data.need_register) {
+                const ok = confirm(`"${user}"는 등록되지 않은 사용자입니다.\n지금 입력한 비밀번호로 새 사용자를 만들까요?`);
+                if (!ok) return;
+                const res2 = await fetch('/api/user_register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json;charset=utf-8' },
+                    body: JSON.stringify({ user, password })
+                });
+                const data2 = await res2.json();
+                if (!res2.ok || !data2.success) {
+                    alert(data2.message || '새 사용자 생성 중 오류가 발생했습니다.');
+                    return;
+                }
+                alert('새 사용자가 생성되었습니다.');
+                loginUser = user;
+                currentUser = user;
+                isAdmin = false;
+                localStorage.setItem('accountBookLoginUser', loginUser);
+                localStorage.setItem('accountBookViewUser', currentUser);
+                localStorage.setItem('accountBookIsAdmin', '0');
+                updateUserUI();
+                closeLoginModal();
+                await fetchList();
+                return;
+            }
+            loginError.textContent = data.message || '로그인에 실패했습니다.';
+            loginError.style.display = 'block';
+        } catch (e) {
+            console.error(e);
+            loginError.textContent = '서버와 통신 중 오류가 발생했습니다.';
+            loginError.style.display = 'block';
+        }
     }
 
-    /* ---------- 초기화 ---------- */
     document.addEventListener('DOMContentLoaded', () => {
         initUser();
         setToday();
@@ -1325,8 +1327,9 @@
             applyFilterAndRender();
         });
 
-        btnClearEntries.addEventListener('click', clearEntriesForUser);
+        btnChangeUser.addEventListener('click', openLoginModal);
         btnDeleteUser.addEventListener('click', deleteCurrentUser);
+        btnClearEntries.addEventListener('click', clearEntriesForUser);
 
         tbody.addEventListener('click', (event) => {
             const target = event.target;
@@ -1338,23 +1341,32 @@
             }
         });
 
-        btnImportCsv.addEventListener('click', importCsv);
-
-        btnChangeUser.addEventListener('click', openUserModal);
-        btnModalCancel.addEventListener('click', closeUserModal);
-        btnModalOk.addEventListener('click', handleUserModalOk);
-
-        userModalBackdrop.addEventListener('click', (e) => {
-            if (e.target === userModalBackdrop) {
-                closeUserModal();
-            }
+        adminUserSelect.addEventListener('change', async () => {
+            const u = adminUserSelect.value;
+            if (!u) return;
+            currentUser = u;
+            localStorage.setItem('accountBookViewUser', currentUser);
+            updateUserUI();
+            await fetchList();
         });
 
-        modalPasswordInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                handleUserModalOk();
-            }
+        btnUploadCsv.addEventListener('click', handleCsvUpload);
+
+        loginCancelBtn.addEventListener('click', closeLoginModal);
+        loginConfirmBtn.addEventListener('click', submitLogin);
+        loginPasswordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') submitLogin();
         });
+        loginUsernameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') loginPasswordInput.focus();
+        });
+        loginModalBackdrop.addEventListener('click', (e) => {
+            if (e.target === loginModalBackdrop) closeLoginModal();
+        });
+
+        if (isAdmin) {
+            loadAdminUsers();
+        }
     });
 </script>
 </body>
