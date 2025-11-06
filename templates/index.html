@@ -143,7 +143,7 @@
             transform: translateY(1px);
         }
 
-        /* ✅ 입력 폼 기본: PC에서 4칸 그리드 */
+        /* PC 기본: 4칸 그리드 */
         form {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -379,68 +379,63 @@
             font-size: 0.8rem;
         }
 
-        /* ✅ 반응형: 태블릿에서 2칸, 작은 폰에서 1칸 */
-
-        /* 태블릿/중간 화면: 2칸 */
+        /* 태블릿: 2칸 */
         @media (max-width: 900px) {
             form {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
 
-        /* 작은 폰: 1칸 + 헤더/요약/CSV 세로 정렬 */
-/* 작은 폰: 1칸 + 헤더/요약/CSV/필터 세로 정렬 */
-@media (max-width: 520px) {
-    /* 입력 폼: 1칸 그리드 고정 (지금처럼 세로로) */
-    form {
-        grid-template-columns: 1fr;
-    }
+        /* 작은 폰: 1칸 + 월 선택 / 전체 보기 모양 이전처럼 */
+        @media (max-width: 520px) {
+            /* 입력 폼 1칸 */
+            form {
+                grid-template-columns: 1fr;
+            }
 
-    header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .header-right {
-        align-items: flex-start;
-    }
-    .header-user-text {
-        text-align: left;
-    }
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .header-right {
+                align-items: flex-start;
+            }
+            .header-user-text {
+                text-align: left;
+            }
 
-    .summary-bar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-    }
+            .summary-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
 
-    /* CSV 업로드 줄 세로 정렬 */
-    .csv-row {
-        flex-direction: column;
-        align-items: flex-start;
-    }
+            /* CSV 줄 세로 */
+            .csv-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
 
-    /* 조회 기간: 월 선택 아래에 작은 pill 버튼 */
-    .filter-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
-    }
-    .filter-field {
-        width: 100%;
-    }
-    .filter-field input[type="month"] {
-        width: 100%;
-    }
-    /* 버튼은 자동 너비(예전처럼 동그란 작은 버튼) */
-    #btn-clear-filter {
-        width: auto;
-        justify-content: flex-start;
-        text-align: left;
-    }
-}
-    }
-}
-
+            /* 조회 기간: 월 선택은 전체 폭, 전체보기는 작은 pill 버튼 */
+            .filter-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+            .filter-field {
+                width: auto;
+            }
+            .filter-field:first-child {
+                width: 100%;      /* 월 선택 칸만 100% */
+            }
+            .filter-field input[type="month"] {
+                width: 100%;
+            }
+            #btn-clear-filter {
+                width: auto;      /* 버튼은 내용만큼만 */
+                justify-content: center;
+                text-align: center;
+                align-self: flex-start;
             }
         }
     </style>
@@ -637,7 +632,7 @@
     </section>
 </div>
 
-<!-- 로그인 모달 (비밀번호 type=password) -->
+<!-- 로그인 모달 -->
 <div class="modal-backdrop" id="login-modal-backdrop">
     <div class="modal">
         <div class="modal-header">사용자 로그인 / 변경</div>
@@ -1121,12 +1116,10 @@
     }
 
     async function deleteCurrentUser() {
-        // 현재 로그인한 계정이 관리자이고, 그 계정 자신을 삭제하려 할 때만 막기
         if (isAdmin && currentUser === loginUser) {
             alert('현재 로그인한 관리자 계정은 삭제할 수 없습니다.');
             return;
         }
-
         if (!confirm(`"${currentUser}" 사용자를 삭제하면 해당 사용자의 모든 내역도 삭제됩니다. 계속할까요?`)) return;
         try {
             const res = await fetch('/api/delete_user', {
