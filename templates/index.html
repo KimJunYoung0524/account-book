@@ -389,28 +389,55 @@
         }
 
         /* 작은 폰: 1칸 + 헤더/요약/CSV 세로 정렬 */
-        @media (max-width: 520px) {
-            form {
-                grid-template-columns: 1fr;
-            }
-            header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .header-right {
-                align-items: flex-start;
-            }
-            .header-user-text {
-                text-align: left;
-            }
-            .summary-bar {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 4px;
-            }
-            .csv-row {
-                flex-direction: column;
-                align-items: flex-start;
+/* 작은 폰: 1칸 + 헤더/요약/CSV/필터 세로 정렬 */
+@media (max-width: 520px) {
+    /* 입력 폼: 1칸 그리드 고정 */
+    form {
+        grid-template-columns: 1fr;
+    }
+
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .header-right {
+        align-items: flex-start;
+    }
+    .header-user-text {
+        text-align: left;
+    }
+
+    .summary-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    /* CSV 업로드 줄 세로 정렬 */
+    .csv-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    /* ✅ 조회 기간: 월 선택 / 전체 보기 세로로 쌓기 */
+    .filter-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .filter-field {
+        width: 100%;
+    }
+    .filter-field input[type="month"] {
+        width: 100%;
+    }
+    #btn-clear-filter {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+    }
+}
+
             }
         }
     </style>
