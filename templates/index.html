@@ -441,12 +441,22 @@
     }
 
     /* 날짜 input만 너무 길지 않게 제한 */
-    #account-form .form-group {
-        width: 100%;
-        margin-bottom: 10px;
-    }
+#account-form input[type="date"],
+#account-form input[type="number"],
+#account-form select {
+    width: 100%;
+    height: 48px; /* 동일 두께 */
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    box-sizing: border-box;
+    font-size: 0.95rem;
 }
 
+/* iOS 날짜 input 내부 글자 가운데 정렬 */
+#account-form input[type="date"] {
+    text-align: center;
+}
     </style>
 </head>
 <body>
