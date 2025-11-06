@@ -391,7 +391,7 @@
         /* 작은 폰: 1칸 + 헤더/요약/CSV 세로 정렬 */
 /* 작은 폰: 1칸 + 헤더/요약/CSV/필터 세로 정렬 */
 @media (max-width: 520px) {
-    /* 입력 폼: 1칸 그리드 고정 */
+    /* 입력 폼: 1칸 그리드 고정 (지금처럼 세로로) */
     form {
         grid-template-columns: 1fr;
     }
@@ -419,11 +419,11 @@
         align-items: flex-start;
     }
 
-    /* ✅ 조회 기간: 월 선택 / 전체 보기 세로로 쌓기 */
+    /* 조회 기간: 월 선택 아래에 작은 pill 버튼 */
     .filter-row {
         flex-direction: column;
         align-items: flex-start;
-        gap: 8px;
+        gap: 6px;
     }
     .filter-field {
         width: 100%;
@@ -431,10 +431,13 @@
     .filter-field input[type="month"] {
         width: 100%;
     }
+    /* 버튼은 자동 너비(예전처럼 동그란 작은 버튼) */
     #btn-clear-filter {
-        width: 100%;
-        justify-content: center;
-        text-align: center;
+        width: auto;
+        justify-content: flex-start;
+        text-align: left;
+    }
+}
     }
 }
 
