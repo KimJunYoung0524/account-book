@@ -1,3 +1,4 @@
+def api_import():
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -430,11 +431,20 @@
             #account-form {
                 display: block;
             }
-                width: 100%;
-        margin-bottom: 10px;    #account-form .form-group {
+            #account-form .form-group {
                 width: 100%;
                 margin-bottom: 10px;
             }
+        }
+
+        #account-form .form-group {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        /* 날짜 input만 너무 길지 않게 제한 */
+        #account-form input[type="date"] {
+            max-width: 260px;   /* 마음에 안 들면 240~280 사이로 조정해서 써도 됨 */
         }
     </style>
 </head>
@@ -603,13 +613,14 @@
         </div>
     </section>
 
-    <!-- CSV 업로드 -->
+    <!-- CSV/XLSX 업로드 -->
     <section class="card">
         <div class="card-header">
-            <h2>CSV 업로드 (은행 내역 가져오기)</h2>
+            <h2>파일 업로드 (은행 내역 가져오기)</h2>
         </div>
         <div class="csv-row">
-            <input type="file" id="csv-file" accept=".csv">
+            <!-- ✅ csv + xls + xlsx 모두 선택 가능하게 변경 -->
+            <input type="file" id="csv-file" accept=".csv,.xls,.xlsx">
             <div class="csv-select-group">
                 <div class="form-group" style="min-width:120px;">
                     <label for="csv-main-category">기본 대분류</label>
@@ -623,9 +634,10 @@
                     <input type="text" id="csv-sub-category" value="기타지출">
                 </div>
             </div>
-            <button class="btn secondary" id="btn-upload-csv">CSV 업로드</button>
+            <!-- 버튼 텍스트도 살짝 변경 -->
+            <button class="btn secondary" id="btn-upload-csv">파일 업로드</button>
         </div>
-        <small>국민은행 CSV(앱/웹 내역 다운로드)와 일반 CSV를 자동으로 인식합니다.</small>
+        <small>국민은행 CSV(앱/웹 내역 다운로드), 일반 CSV, 엑셀(xls/xlsx) 파일을 자동으로 인식합니다.</small>
         <div id="csv-message" class="month-summary-text" style="margin-top:6px;"></div>
     </section>
 </div>
@@ -1192,7 +1204,7 @@
         csvMessage.textContent = '';
         const file = csvFileInput.files[0];
         if (!file) {
-            csvMessage.textContent = 'CSV 파일을 선택해 주세요.';
+            csvMessage.textContent = 'CSV/XLSX 파일을 선택해 주세요.';
             return;
         }
         const defaultMain = csvMainCategory.value || '지출';
@@ -1211,10 +1223,10 @@
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
-                csvMessage.textContent = data.message || 'CSV 업로드 중 오류가 발생했습니다.';
+                csvMessage.textContent = data.message || '파일 업로드 중 오류가 발생했습니다.';
                 return;
             }
-            csvMessage.textContent = `CSV에서 ${data.imported}건을 불러왔습니다.`;
+            csvMessage.textContent = `파일에서 ${data.imported}건을 불러왔습니다.`;
             csvFileInput.value = '';
             await fetchList();
         } catch (e) {

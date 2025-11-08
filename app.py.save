@@ -1,3 +1,5 @@
+
+
 from flask import Flask, request, jsonify, send_file, render_template
 import os
 import json
@@ -106,7 +108,7 @@ def ensure_admin_user():
 ensure_admin_user()
 
 
-# ------------------ CSV/금액 파싱 유틸 ------------------
+# ------------------ CSV 파싱 유틸 (국민은행 + 일반 CSV) ------------------
 def _find_col(possible_names, columns):
     for name in possible_names:
         if name in columns:
@@ -508,33 +510,25 @@ def api_clear_entries():
 
 @app.route('/api/delete_user', methods=['POST'])
 def api_delete_user():
-    """
-    - 일반 유저 '김준영' (다른 비번으로 로그인) → 삭제 허용
-    - 관리자 '김준영' (비번 $Sin10029187 로 로그인한 상태) → 삭제 불가
-    """
-    req = request.get_json() or {}
-    if 'user' not in req:
+    req = request.get_json()
+    if not req or 'user' not in req:
         return jsonify({"success": False, "message": "user가 필요합니다."}), 400
 
-    user_to_delete = req.get('user')
-    login_user = req.get('login_user')         # 현재 로그인한 사용자 이름
-    is_admin = bool(req.get('is_admin', False))  # 현재 로그인한 사용자가 관리자 여부
+    user = req.get('user')
+    # 프론트에서 로그인 응답의 is_admin 값을 같이 보내준다고 가정
+    is_admin = bool(req.get('is_admin', False))
 
-    # ✅ 관리자 김준영 보호:
-    # - 삭제 대상이 '김준영' 이고
-    # - 로그인한 사용자도 '김준영' 이고
-    # - 그 로그인 상태가 관리자일 때만 삭제 불가
-    if user_to_delete == '김준영' and login_user == '김준영' and is_admin:
+    # ✅ "아이디 김준영 + 비번 $Sin10029187" 로 로그인한 상태(관리자일 때)만 보호
+    if user == '김준영' and is_admin:
         return jsonify({"success": False, "message": "관리자 계정은 삭제할 수 없습니다."}), 400
 
-    # 그 외에는 모두 삭제 허용 (일반 유저 김준영 포함)
     data = load_data()
-    new_data = [d for d in data if d.get('user', 'guest') != user_to_delete]
+    new_data = [d for d in data if d.get('user', 'guest') != user]
     save_data(new_data)
 
     users = load_users()
-    if user_to_delete in users:
-        users.pop(user_to_delete)
+    if user in users:
+        users.pop(user)
         save_users(users)
 
     return jsonify({"success": True})
@@ -566,7 +560,8 @@ def api_download():
     return send_file(tmp.name, as_attachment=True, download_name="가계부.xlsx")
 
 
-# ------------------ CSV/XLS/XLSX IMPORT ------------------
+# ------------------ CSV/XLSX IMPORT ------------------
+def api_import():
 @app.route('/api/import', methods=['POST'])
 def api_import():
     if 'file' not in request.files:
@@ -636,7 +631,6 @@ def api_import():
             main_category = default_main
             amount_val = None
 
-            # ① 단일 금액 컬럼이 있는 경우
             if amount_col:
                 amount_val = _parse_amount(row.get(amount_col))
                 if amount_val is None:
@@ -647,7 +641,6 @@ def api_import():
                 else:
                     main_category = default_main
             else:
-                # ② 입금/출금 분리된 경우
                 credit = _parse_amount(row.get(credit_col)) if credit_col else None
                 debit = _parse_amount(row.get(debit_col)) if debit_col else None
                 credit = credit or 0
@@ -702,102 +695,16 @@ def api_import():
         save_data(data)
         return jsonify({"success": True, "imported": imported_count})
 
-    # ------------------ 1) 엑셀: xlsx ------------------
-    if ext == '.xlsx':
+    # 1) 엑셀(xls, xlsx)인 경우 → 바로 DF로 처리
+    if ext in ['.xls', '.xlsx']:
         try:
             df = pd.read_excel(io.BytesIO(raw))
         except Exception:
-            return jsonify({"success": False, "message": "엑셀(xlsx) 파일을 읽을 수 없습니다."}), 400
+            return jsonify({"success": False, "message": "엑셀 파일을 읽을 수 없습니다."}), 400
+
         return handle_dataframe(df)
 
-    # ------------------ 2) 엑셀: xls (KB HTML 형식 포함) ------------------
-    if ext == '.xls':
-        # 1단계: 진짜 엑셀 형식인지 먼저 시도
-        try:
-            df = pd.read_excel(io.BytesIO(raw))
-            return handle_dataframe(df)
-        except Exception:
-            pass  # 실패하면 HTML 가능성을 보고 다음 단계로
-
-        # 2단계: pandas.read_html() 시도 (환경에 따라 안 될 수 있음)
-        tables = None
-        try:
-            tables = pd.read_html(io.BytesIO(raw))
-        except Exception:
-            tables = None
-
-        if tables:
-            df = tables[-1].copy()
-            # 첫 행에 헤더가 들어있는 경우 처리
-            if df.shape[0] > 1 and all(isinstance(c, (int, float)) for c in df.columns):
-                df.columns = df.iloc[0]
-                df = df.iloc[1:]
-            df = df.reset_index(drop=True)
-            return handle_dataframe(df)
-
-        # 3단계: 의존성 없이 HTML <table> 직접 파싱
-        import re as _re
-        import html as _html
-        try:
-            text = raw.decode('utf-8', errors='ignore')
-            tables_html = _re.findall(
-                r'(<table.*?>.*?</table>)',
-                text,
-                flags=_re.DOTALL | _re.IGNORECASE
-            )
-            if not tables_html:
-                raise ValueError("no <table> tags found")
-
-            # KB 거래내역 기준: 마지막 테이블이 실제 거래내역
-            last_table = tables_html[-1]
-
-            rows = _re.findall(
-                r'<tr.*?>(.*?)</tr>',
-                last_table,
-                flags=_re.DOTALL | _re.IGNORECASE
-            )
-
-            table_data = []
-            for r in rows:
-                cells = _re.findall(
-                    r'<t[dh][^>]*>(.*?)</t[dh]>',
-                    r,
-                    flags=_re.DOTALL | _re.IGNORECASE
-                )
-                if not cells:
-                    continue
-                clean_cells = []
-                for c in cells:
-                    # 태그 제거
-                    c2 = _re.sub(r'<.*?>', '', c, flags=_re.DOTALL)
-                    c2 = _html.unescape(c2).strip()
-                    clean_cells.append(c2)
-                if any(clean_cells):
-                    table_data.append(clean_cells)
-
-            if len(table_data) <= 1:
-                raise ValueError("not enough rows in table")
-
-            header = table_data[0]
-            rows_data = table_data[1:]
-            width = len(header)
-
-            # 행 길이를 헤더 길이에 맞게 보정
-            norm_rows = [
-                row + [''] * (width - len(row)) if len(row) < width else row[:width]
-                for row in rows_data
-            ]
-
-            df = pd.DataFrame(norm_rows, columns=header)
-            return handle_dataframe(df)
-
-        except Exception:
-            return jsonify({
-                "success": False,
-                "message": "엑셀(xls) 파일을 읽을 수 없습니다. (HTML 형식 표 구조를 파싱하지 못했습니다.)"
-            }), 400
-
-    # ------------------ 3) (기존) CSV: 국민은행 '행 단위' 포맷 시도 ------------------
+    # 2) (기존) CSV: 국민은행 '행 단위' 포맷 시도
     kb_row_items = parse_kb_kukmin_row(raw)
     if kb_row_items is not None:
         data = load_data()
@@ -821,7 +728,7 @@ def api_import():
         save_data(data)
         return jsonify({"success": True, "imported": imported_count})
 
-    # ------------------ 4) (기존) CSV: 국민은행 블록 포맷 시도 ------------------
+    # 3) (기존) CSV: 국민은행 블록 포맷 시도
     kb_block_items = parse_kb_kukmin_block(raw)
     if kb_block_items is not None:
         data = load_data()
@@ -845,7 +752,7 @@ def api_import():
         save_data(data)
         return jsonify({"success": True, "imported": imported_count})
 
-    # ------------------ 5) (기존) 일반 CSV ------------------
+    # 4) (기존) 일반 CSV 로딩 후 공통 처리
     try:
         df = pd.read_csv(io.BytesIO(raw))
     except Exception:
