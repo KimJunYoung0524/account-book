@@ -4,6 +4,8 @@ import json
 import tempfile
 import io
 import re
+import base64
+import ast
 from datetime import datetime, timezone
 import pandas as pd
 
@@ -119,6 +121,53 @@ ensure_admin_user()
 FS_INIT_ERROR = None
 
 
+def _parse_service_account_info(raw_value):
+    raw = str(raw_value or "").strip()
+    if not raw:
+        raise ValueError("FIREBASE_SERVICE_ACCOUNT_JSON is empty")
+
+    # 1) Normal JSON object text
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, dict):
+            return parsed
+        if isinstance(parsed, str):
+            nested = json.loads(parsed)
+            if isinstance(nested, dict):
+                return nested
+    except Exception:
+        pass
+
+    # 2) Mistakenly wrapped in single/double quotes
+    if (raw.startswith("'") and raw.endswith("'")) or (raw.startswith('"') and raw.endswith('"')):
+        unwrapped = raw[1:-1]
+        try:
+            parsed = json.loads(unwrapped)
+            if isinstance(parsed, dict):
+                return parsed
+        except Exception:
+            pass
+        try:
+            literal = ast.literal_eval(raw)
+            if isinstance(literal, str):
+                parsed = json.loads(literal)
+                if isinstance(parsed, dict):
+                    return parsed
+        except Exception:
+            pass
+
+    # 3) base64-encoded JSON text
+    try:
+        decoded = base64.b64decode(raw).decode("utf-8")
+        parsed = json.loads(decoded)
+        if isinstance(parsed, dict):
+            return parsed
+    except Exception:
+        pass
+
+    raise ValueError("Invalid FIREBASE_SERVICE_ACCOUNT_JSON format")
+
+
 def _init_firestore_client():
     global FS_INIT_ERROR
     if firebase_admin is None or admin_firestore is None:
@@ -133,7 +182,7 @@ def _init_firestore_client():
         service_account_path = os.environ.get("FIREBASE_SERVICE_ACCOUNT_PATH")
 
         if service_account_json:
-            info = json.loads(service_account_json)
+            info = _parse_service_account_info(service_account_json)
             cred = credentials.Certificate(info)
             firebase_admin.initialize_app(cred)
         elif service_account_path and os.path.exists(service_account_path):
