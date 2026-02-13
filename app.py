@@ -4,7 +4,17 @@ import json
 import tempfile
 import io
 import re
+from datetime import datetime, timezone
 import pandas as pd
+
+try:
+    import firebase_admin
+    from firebase_admin import credentials
+    from firebase_admin import firestore as admin_firestore
+except Exception:
+    firebase_admin = None
+    credentials = None
+    admin_firestore = None
 
 app = Flask(__name__)
 
@@ -104,6 +114,256 @@ def ensure_admin_user():
 
 
 ensure_admin_user()
+
+
+def _init_firestore_client():
+    if firebase_admin is None or admin_firestore is None:
+        return None
+    try:
+        if firebase_admin._apps:
+            return admin_firestore.client()
+
+        service_account_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON")
+        service_account_path = os.environ.get("FIREBASE_SERVICE_ACCOUNT_PATH")
+
+        if service_account_json:
+            info = json.loads(service_account_json)
+            cred = credentials.Certificate(info)
+            firebase_admin.initialize_app(cred)
+        elif service_account_path and os.path.exists(service_account_path):
+            cred = credentials.Certificate(service_account_path)
+            firebase_admin.initialize_app(cred)
+        else:
+            firebase_admin.initialize_app()
+
+        return admin_firestore.client()
+    except Exception as e:
+        print(f"[WARN] Firestore init failed, fallback to local json: {e}")
+        return None
+
+
+FS_CLIENT = _init_firestore_client()
+
+
+def _is_firestore_enabled():
+    return FS_CLIENT is not None
+
+
+def _normalize_user_key(user):
+    value = str(user or "guest").strip()
+    return value or "guest"
+
+
+def _entries_ref(user):
+    user_key = _normalize_user_key(user)
+    return FS_CLIENT.collection("accountBooks").document(user_key).collection("entries")
+
+
+def _parse_date_for_firestore(date_value):
+    if date_value is None:
+        return datetime.now(timezone.utc)
+
+    text = str(date_value).strip()
+    if not text:
+        return datetime.now(timezone.utc)
+
+    for fmt in ("%Y-%m-%d", "%Y.%m.%d", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(text[:10], fmt).replace(tzinfo=timezone.utc)
+        except Exception:
+            continue
+
+    return datetime.now(timezone.utc)
+
+
+def _to_date_string(value):
+    if value is None:
+        return ""
+
+    try:
+        if hasattr(value, "to_datetime"):
+            value = value.to_datetime()
+    except Exception:
+        pass
+
+    if isinstance(value, datetime):
+        return value.astimezone(timezone.utc).strftime("%Y-%m-%d")
+
+    text = str(value).strip()
+    if len(text) >= 10:
+        return text[:10].replace(".", "-").replace("/", "-")
+    return text
+
+
+def _legacy_to_firestore_payload(user, item):
+    main = str(item.get("main_category") or "지출")
+    type_value = "income" if main == "수입" else "expense"
+    default_category = "기타수입" if type_value == "income" else "기타지출"
+
+    amount_raw = item.get("amount", 0)
+    try:
+        amount_value = float(str(amount_raw).replace(",", "").strip())
+    except Exception:
+        amount_value = 0
+
+    return {
+        "ownerUid": _normalize_user_key(user),
+        "type": type_value,
+        "amount": amount_value,
+        "category": item.get("sub_category") or default_category,
+        "memo": item.get("memo") or "",
+        "date": _parse_date_for_firestore(item.get("date")),
+        "createdAt": admin_firestore.SERVER_TIMESTAMP,
+        "updatedAt": admin_firestore.SERVER_TIMESTAMP,
+    }
+
+
+def _firestore_to_legacy_item(user, doc_id, raw):
+    raw = raw or {}
+    type_value = str(raw.get("type") or "expense").lower()
+    main = "수입" if type_value == "income" else "지출"
+    default_sub = "기타수입" if main == "수입" else "기타지출"
+
+    amount_raw = raw.get("amount", 0)
+    try:
+        amount_value = float(amount_raw)
+    except Exception:
+        amount_value = 0
+
+    return {
+        "id": str(doc_id),
+        "user": _normalize_user_key(raw.get("ownerUid") or user),
+        "date": _to_date_string(raw.get("date")),
+        "amount": amount_value,
+        "memo": raw.get("memo") or "",
+        "main_category": main,
+        "sub_category": raw.get("category") or default_sub,
+    }
+
+
+def _list_items(user):
+    user_key = _normalize_user_key(user)
+    if _is_firestore_enabled():
+        docs = _entries_ref(user_key).stream()
+        items = []
+        for doc in docs:
+            items.append(_firestore_to_legacy_item(user_key, doc.id, doc.to_dict()))
+        items.sort(key=lambda x: x.get("date", ""))
+        return items
+
+    data = load_data()
+    return [d for d in data if d.get("user", "guest") == user_key]
+
+
+def _add_item(user, item):
+    user_key = _normalize_user_key(user)
+    if _is_firestore_enabled():
+        payload = _legacy_to_firestore_payload(user_key, item)
+        ref = _entries_ref(user_key).document()
+        ref.set(payload)
+        return _firestore_to_legacy_item(user_key, ref.id, payload)
+
+    data = load_data()
+    new_id = get_next_id(data)
+    new_item = dict(item)
+    new_item["id"] = new_id
+    new_item["user"] = user_key
+    data.append(new_item)
+    save_data(data)
+    return new_item
+
+
+def _add_items_bulk(user, items):
+    user_key = _normalize_user_key(user)
+    if not items:
+        return 0
+
+    if _is_firestore_enabled():
+        for item in items:
+            payload = _legacy_to_firestore_payload(user_key, item)
+            _entries_ref(user_key).document().set(payload)
+        return len(items)
+
+    data = load_data()
+    next_id = get_next_id(data)
+    for item in items:
+        new_item = dict(item)
+        new_item["id"] = next_id
+        new_item["user"] = user_key
+        data.append(new_item)
+        next_id += 1
+    save_data(data)
+    return len(items)
+
+
+def _delete_item(user, item_id):
+    user_key = _normalize_user_key(user)
+    if _is_firestore_enabled():
+        target_id = str(item_id).strip()
+        if not target_id:
+            return False
+        doc_ref = _entries_ref(user_key).document(target_id)
+        doc = doc_ref.get()
+        if not doc.exists:
+            return False
+        doc_ref.delete()
+        return True
+
+    try:
+        target_id = int(item_id)
+    except Exception:
+        return False
+
+    data = load_data()
+    new_data = []
+    deleted = False
+    for item in data:
+        try:
+            item_int_id = int(item.get("id", 0))
+        except Exception:
+            item_int_id = 0
+
+        if (not deleted
+                and item_int_id == target_id
+                and item.get("user", "guest") == user_key):
+            deleted = True
+            continue
+        new_data.append(item)
+
+    if deleted:
+        save_data(new_data)
+    return deleted
+
+
+def _clear_items_for_user(user):
+    user_key = _normalize_user_key(user)
+    if _is_firestore_enabled():
+        docs = list(_entries_ref(user_key).stream())
+        if not docs:
+            return
+        for doc in docs:
+            doc.reference.delete()
+        return
+
+    data = load_data()
+    new_data = [d for d in data if d.get("user", "guest") != user_key]
+    save_data(new_data)
+
+
+def _list_all_users_for_admin():
+    names = set(load_users().keys())
+
+    if _is_firestore_enabled():
+        for doc in FS_CLIENT.collection("accountBooks").stream():
+            names.add(doc.id)
+    else:
+        data = load_data()
+        for item in data:
+            names.add(item.get("user", "guest"))
+
+    if "김준영" in names:
+        names.add("admin")
+    return sorted(names)
 
 
 # ------------------ CSV/금액 파싱 유틸 ------------------
@@ -404,25 +664,15 @@ def api_user_register():
 @app.route('/api/users_for_admin', methods=['GET'])
 def api_users_for_admin():
     """관리자 화면에서 조회할 수 있는 사용자 목록"""
-    users = load_users()
-    data = load_data()
-    names = set(users.keys())
-    for item in data:
-        names.add(item.get('user', 'guest'))
-    # 혹시 누락되었을 수 있으니 관리자 계정명도 포함
-    if '김준영' in names:
-        names.add('admin')
-    user_list = sorted(names)
+    user_list = _list_all_users_for_admin()
     return jsonify({"success": True, "users": user_list})
 
 
 # ------------------ 가계부 CRUD ------------------
 @app.route('/api/list', methods=['GET'])
 def api_list():
-    data = load_data()
-    user = request.args.get('user')
-    if user:
-        data = [d for d in data if d.get('user', 'guest') == user]
+    user = request.args.get('user', 'guest')
+    data = _list_items(user)
     return jsonify({"success": True, "items": data})
 
 
@@ -438,21 +688,15 @@ def api_add():
     except ValueError:
         return jsonify({"success": False, "message": "금액은 숫자여야 합니다."}), 400
 
-    data = load_data()
-    new_id = get_next_id(data)
     user = req.get('user', 'guest')
-
-    new_item = {
-        "id": new_id,
-        "user": user,
+    item = {
         "date": req['date'],
         "amount": amount_val,
         "memo": req['memo'],
         "main_category": req['main_category'],
         "sub_category": req['sub_category']
     }
-    data.append(new_item)
-    save_data(data)
+    new_item = _add_item(user, item)
     return jsonify({"success": True, "item": new_item})
 
 
@@ -462,33 +706,10 @@ def api_delete():
     if not req or 'id' not in req:
         return jsonify({"success": False, "message": "ID가 필요합니다."}), 400
 
-    try:
-        target_id = int(req['id'])
-    except Exception:
-        return jsonify({"success": False, "message": "잘못된 ID입니다."}), 400
-
-    user = req.get('user')
-    data = load_data()
-    new_data = []
-    deleted = False
-
-    for item in data:
-        try:
-            item_id = int(item.get('id', 0))
-        except Exception:
-            item_id = 0
-
-        if (not deleted
-                and item_id == target_id
-                and (user is None or item.get('user', 'guest') == user)):
-            deleted = True
-            continue
-        new_data.append(item)
-
+    user = req.get('user', 'guest')
+    deleted = _delete_item(user, req.get('id'))
     if not deleted:
         return jsonify({"success": False, "message": "항목을 찾을 수 없습니다."}), 404
-
-    save_data(new_data)
     return jsonify({"success": True})
 
 
@@ -499,10 +720,7 @@ def api_clear_entries():
         return jsonify({"success": False, "message": "user가 필요합니다."}), 400
 
     user = req.get('user')
-    data = load_data()
-    new_data = [d for d in data if d.get('user', 'guest') != user]
-
-    save_data(new_data)
+    _clear_items_for_user(user)
     return jsonify({"success": True})
 
 
@@ -528,9 +746,7 @@ def api_delete_user():
         return jsonify({"success": False, "message": "관리자 계정은 삭제할 수 없습니다."}), 400
 
     # 그 외에는 모두 삭제 허용 (일반 유저 김준영 포함)
-    data = load_data()
-    new_data = [d for d in data if d.get('user', 'guest') != user_to_delete]
-    save_data(new_data)
+    _clear_items_for_user(user_to_delete)
 
     users = load_users()
     if user_to_delete in users:
@@ -542,10 +758,8 @@ def api_delete_user():
 
 @app.route('/api/download', methods=['GET'])
 def api_download():
-    data = load_data()
-    user = request.args.get('user')
-    if user:
-        data = [d for d in data if d.get('user', 'guest') == user]
+    user = request.args.get('user', 'guest')
+    data = _list_items(user)
 
     if not data:
         df = pd.DataFrame(columns=["날짜", "금액", "내용", "대분류", "소분류"])
@@ -615,8 +829,7 @@ def api_import():
                 "message": "파일에 '날짜' 또는 '일시'와 '금액/입금/출금'에 해당하는 컬럼이 필요합니다."
             }), 400
 
-        data = load_data()
-        next_id = get_next_id(data)
+        items_to_add = []
         imported_count = 0
 
         for _, row in df.iterrows():
@@ -681,16 +894,13 @@ def api_import():
                 continue
 
             new_item = {
-                "id": next_id,
-                "user": user,
                 "date": date_str,
                 "amount": amount_val,
                 "memo": memo_val,
                 "main_category": main_category,
                 "sub_category": sub_category
             }
-            data.append(new_item)
-            next_id += 1
+            items_to_add.append(new_item)
             imported_count += 1
 
         if imported_count == 0:
@@ -699,7 +909,7 @@ def api_import():
                 "message": "유효한 내역을 찾지 못했습니다. 컬럼 구성을 확인해 주세요."
             }), 400
 
-        save_data(data)
+        _add_items_bulk(user, items_to_add)
         return jsonify({"success": True, "imported": imported_count})
 
     # ------------------ 1) 엑셀: xlsx ------------------
@@ -800,49 +1010,41 @@ def api_import():
     # ------------------ 3) (기존) CSV: 국민은행 '행 단위' 포맷 시도 ------------------
     kb_row_items = parse_kb_kukmin_row(raw)
     if kb_row_items is not None:
-        data = load_data()
-        next_id = get_next_id(data)
+        items_to_add = []
         imported_count = 0
         for item in kb_row_items:
             new_item = {
-                "id": next_id,
-                "user": user,
                 "date": item["date"],
                 "amount": item["amount"],
                 "memo": item["memo"],
                 "main_category": item["main_category"],
                 "sub_category": item["sub_category"]
             }
-            data.append(new_item)
-            next_id += 1
+            items_to_add.append(new_item)
             imported_count += 1
         if imported_count == 0:
             return jsonify({"success": False, "message": "유효한 내역을 찾지 못했습니다. CSV 내용을 확인해 주세요."}), 400
-        save_data(data)
+        _add_items_bulk(user, items_to_add)
         return jsonify({"success": True, "imported": imported_count})
 
     # ------------------ 4) (기존) CSV: 국민은행 블록 포맷 시도 ------------------
     kb_block_items = parse_kb_kukmin_block(raw)
     if kb_block_items is not None:
-        data = load_data()
-        next_id = get_next_id(data)
+        items_to_add = []
         imported_count = 0
         for item in kb_block_items:
             new_item = {
-                "id": next_id,
-                "user": user,
                 "date": item["date"],
                 "amount": item["amount"],
                 "memo": item["memo"],
                 "main_category": item["main_category"],
                 "sub_category": item["sub_category"]
             }
-            data.append(new_item)
-            next_id += 1
+            items_to_add.append(new_item)
             imported_count += 1
         if imported_count == 0:
             return jsonify({"success": False, "message": "유효한 내역을 찾지 못했습니다. CSV 내용을 확인해 주세요."}), 400
-        save_data(data)
+        _add_items_bulk(user, items_to_add)
         return jsonify({"success": True, "imported": imported_count})
 
     # ------------------ 5) (기존) 일반 CSV ------------------
@@ -859,4 +1061,3 @@ def api_import():
 
 if __name__ == '__main__':
     app.run(debug=True)
-

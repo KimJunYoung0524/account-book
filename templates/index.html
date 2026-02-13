@@ -672,9 +672,16 @@
         "지출": ["식비", "교통", "주거", "통신", "쇼핑", "문화생활", "교육", "의료/건강", "기타지출"]
     };
 
+    const syncUidFromQuery = new URLSearchParams(window.location.search).get('sync_uid');
+    const syncMode = !!syncUidFromQuery;
+
     let loginUser = 'guest';
     let currentUser = 'guest';
     let isAdmin = false;
+
+    function activeUser() {
+        return syncMode ? syncUidFromQuery : currentUser;
+    }
 
     const form = document.getElementById('account-form');
     const dateInput = document.getElementById('date');
@@ -992,7 +999,7 @@
             const btnDel = document.createElement('button');
             btnDel.textContent = '삭제';
             btnDel.className = 'btn secondary btn-delete-row';
-            btnDel.dataset.id = item.id;
+            btnDel.dataset.id = String(item.id || '');
             tdActions.appendChild(btnDel);
             tr.appendChild(tdActions);
 
@@ -1017,7 +1024,7 @@
 
     async function fetchList() {
         try {
-            const res = await fetch('/api/list?user=' + encodeURIComponent(currentUser));
+            const res = await fetch('/api/list?user=' + encodeURIComponent(activeUser()));
             const data = await res.json();
             if (data.success) {
                 allItems = data.items || [];
@@ -1060,7 +1067,7 @@
                     main_category: mainCategory,
                     sub_category: subCategory,
                     memo: memo,
-                    user: currentUser
+                    user: activeUser()
                 })
             });
             const data = await res.json();
@@ -1082,7 +1089,7 @@
     }
 
     function downloadExcel() {
-        window.location.href = '/api/download?user=' + encodeURIComponent(currentUser);
+        window.location.href = '/api/download?user=' + encodeURIComponent(activeUser());
     }
 
     async function deleteItem(id) {
@@ -1090,7 +1097,7 @@
             const res = await fetch('/api/delete', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json;charset=utf-8' },
-                body: JSON.stringify({ id: id, user: currentUser })
+                body: JSON.stringify({ id: id, user: activeUser() })
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
@@ -1105,12 +1112,12 @@
     }
 
     async function clearEntriesForUser() {
-        if (!confirm(`현재 조회 사용자(${currentUser})의 모든 내역을 삭제할까요?`)) return;
+        if (!confirm(`현재 조회 사용자(${activeUser()})의 모든 내역을 삭제할까요?`)) return;
         try {
             const res = await fetch('/api/clear_entries', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json;charset=utf-8' },
-                body: JSON.stringify({ user: currentUser })
+                body: JSON.stringify({ user: activeUser() })
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
@@ -1125,6 +1132,10 @@
     }
 
     async function deleteCurrentUser() {
+        if (syncMode) {
+            alert('앱 연동 모드에서는 사용자 삭제를 지원하지 않습니다.');
+            return;
+        }
         if (isAdmin && currentUser === loginUser) {
             alert('현재 로그인한 관리자 계정은 삭제할 수 없습니다.');
             return;
@@ -1164,8 +1175,8 @@
     }
 
     function updateUserUI() {
-        loginUserLabel.textContent = loginUser;
-        currentUserLabel.textContent = currentUser;
+        loginUserLabel.textContent = syncMode ? '앱연동' : loginUser;
+        currentUserLabel.textContent = activeUser();
         if (isAdmin) {
             adminBadge.style.display = 'inline-block';
             adminPanel.style.display = 'flex';
@@ -1176,6 +1187,7 @@
     }
 
     async function loadAdminUsers() {
+        if (syncMode) return;
         try {
             const res = await fetch('/api/users_for_admin');
             const data = await res.json();
@@ -1211,7 +1223,7 @@
 
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('user', currentUser);
+        formData.append('user', activeUser());
         formData.append('default_main', defaultMain);
         formData.append('default_sub', defaultSub);
 
@@ -1235,6 +1247,13 @@
     }
 
     function initUser() {
+        if (syncMode) {
+            loginUser = syncUidFromQuery;
+            currentUser = syncUidFromQuery;
+            isAdmin = false;
+            updateUserUI();
+            return;
+        }
         const savedLogin = localStorage.getItem('accountBookLoginUser');
         const savedView = localStorage.getItem('accountBookViewUser');
         const savedAdmin = localStorage.getItem('accountBookIsAdmin');
@@ -1245,6 +1264,7 @@
     }
 
     function openLoginModal() {
+        if (syncMode) return;
         loginError.style.display = 'none';
         loginError.textContent = '';
         loginUsernameInput.value = (loginUser === 'guest') ? '' : loginUser;
@@ -1257,6 +1277,7 @@
     }
 
     async function submitLogin() {
+        if (syncMode) return;
         const user = (loginUsernameInput.value || '').trim();
         const password = loginPasswordInput.value || '';
         if (!user || !password) {
@@ -1345,7 +1366,7 @@
         tbody.addEventListener('click', (event) => {
             const target = event.target;
             if (target.classList.contains('btn-delete-row')) {
-                const id = Number(target.dataset.id);
+                const id = String(target.dataset.id || '').trim();
                 if (!id) return;
                 if (!confirm('이 항목을 삭제할까요?')) return;
                 deleteItem(id);
@@ -1375,11 +1396,14 @@
             if (e.target === loginModalBackdrop) closeLoginModal();
         });
 
-        if (isAdmin) {
+        if (syncMode) {
+            adminPanel.style.display = 'none';
+            btnChangeUser.style.display = 'none';
+            btnDeleteUser.style.display = 'none';
+        } else if (isAdmin) {
             loadAdminUsers();
         }
     });
 </script>
 </body>
 </html>
-
