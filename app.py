@@ -149,6 +149,15 @@ def _is_firestore_enabled():
     return FS_CLIENT is not None
 
 
+def _firestore_project_id():
+    if FS_CLIENT is None:
+        return None
+    try:
+        return getattr(FS_CLIENT, "project", None)
+    except Exception:
+        return None
+
+
 def _normalize_user_key(user):
     value = str(user or "guest").strip()
     return value or "guest"
@@ -364,6 +373,40 @@ def _list_all_users_for_admin():
     if "김준영" in names:
         names.add("admin")
     return sorted(names)
+
+
+@app.route('/api/sync_status', methods=['GET'])
+def api_sync_status():
+    expected_project = os.environ.get("FIREBASE_EXPECTED_PROJECT", "wet-project-3fd3b")
+    user_key = request.args.get('sync_uid') or request.args.get('user') or ''
+    user_key = _normalize_user_key(user_key) if user_key else ''
+
+    firestore_enabled = _is_firestore_enabled()
+    project_id = _firestore_project_id()
+    status = {
+        "success": True,
+        "firestore_enabled": firestore_enabled,
+        "firestore_project_id": project_id,
+        "expected_project_id": expected_project,
+        "project_match": bool(project_id) and project_id == expected_project,
+        "service_account_json_present": bool(os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON")),
+        "service_account_path_present": bool(os.environ.get("FIREBASE_SERVICE_ACCOUNT_PATH")),
+        "sync_uid": user_key or None,
+    }
+
+    if not firestore_enabled:
+        status["warning"] = "Firestore disabled. Server is likely using local json fallback."
+        return jsonify(status)
+
+    if user_key:
+        try:
+            docs = list(_entries_ref(user_key).limit(5).stream())
+            status["entries_preview_count"] = len(docs)
+            status["entries_preview_ids"] = [d.id for d in docs]
+        except Exception as e:
+            status["entries_preview_error"] = str(e)
+
+    return jsonify(status)
 
 
 # ------------------ CSV/금액 파싱 유틸 ------------------
