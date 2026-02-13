@@ -122,50 +122,64 @@ FS_INIT_ERROR = None
 
 
 def _parse_service_account_info(raw_value):
-    raw = str(raw_value or "").strip()
-    if not raw:
+    raw = str(raw_value or "")
+    if not raw or not raw.strip():
         raise ValueError("FIREBASE_SERVICE_ACCOUNT_JSON is empty")
 
-    # 1) Normal JSON object text
+    candidates = []
+    raw_stripped = raw.strip()
+    candidates.append(raw_stripped)
+
+    # If mistakenly wrapped in quotes, try unwrapping.
+    if (raw_stripped.startswith("'") and raw_stripped.endswith("'")) or (
+            raw_stripped.startswith('"') and raw_stripped.endswith('"')):
+        candidates.append(raw_stripped[1:-1])
+
+    # If it looks like a Python/JSON string literal, evaluate and try again.
     try:
-        parsed = json.loads(raw)
-        if isinstance(parsed, dict):
-            return parsed
-        if isinstance(parsed, str):
-            nested = json.loads(parsed)
-            if isinstance(nested, dict):
-                return nested
+        literal = ast.literal_eval(raw_stripped)
+        if isinstance(literal, str) and literal.strip():
+            candidates.append(literal.strip())
     except Exception:
         pass
 
-    # 2) Mistakenly wrapped in single/double quotes
-    if (raw.startswith("'") and raw.endswith("'")) or (raw.startswith('"') and raw.endswith('"')):
-        unwrapped = raw[1:-1]
+    # 1) Try parsing as JSON object directly (or nested JSON string).
+    for c in candidates:
         try:
-            parsed = json.loads(unwrapped)
+            parsed = json.loads(c)
             if isinstance(parsed, dict):
                 return parsed
+            if isinstance(parsed, str):
+                nested = json.loads(parsed)
+                if isinstance(nested, dict):
+                    return nested
         except Exception:
-            pass
-        try:
-            literal = ast.literal_eval(raw)
-            if isinstance(literal, str):
-                parsed = json.loads(literal)
+            continue
+
+    def _try_b64_decode(text):
+        compact = "".join(str(text).split())
+        if not compact:
+            return None
+        # Fix missing padding if needed.
+        pad = (-len(compact)) % 4
+        compact_padded = compact + ("=" * pad)
+        for decoder in (base64.b64decode, base64.urlsafe_b64decode):
+            try:
+                decoded = decoder(compact_padded).decode("utf-8")
+                parsed = json.loads(decoded)
                 if isinstance(parsed, dict):
                     return parsed
-        except Exception:
-            pass
+            except Exception:
+                continue
+        return None
 
-    # 3) base64-encoded JSON text
-    try:
-        decoded = base64.b64decode(raw).decode("utf-8")
-        parsed = json.loads(decoded)
+    # 2) Try base64-encoded JSON.
+    for c in candidates:
+        parsed = _try_b64_decode(c)
         if isinstance(parsed, dict):
             return parsed
-    except Exception:
-        pass
 
-    raise ValueError("Invalid FIREBASE_SERVICE_ACCOUNT_JSON format")
+    raise ValueError("Invalid FIREBASE_SERVICE_ACCOUNT_JSON format (not json object / not base64 json)")
 
 
 def _init_firestore_client():
@@ -440,6 +454,8 @@ def api_sync_status():
 
     firestore_enabled = _is_firestore_enabled()
     project_id = _firestore_project_id()
+    raw_env = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON") or ""
+    raw_env_stripped = raw_env.strip()
     status = {
         "success": True,
         "firestore_enabled": firestore_enabled,
@@ -450,6 +466,11 @@ def api_sync_status():
         "service_account_path_present": bool(os.environ.get("FIREBASE_SERVICE_ACCOUNT_PATH")),
         "sync_uid": user_key or None,
         "firestore_init_error": FS_INIT_ERROR,
+        # Safe env diagnostics (never include secret).
+        "service_account_json_len": len(raw_env),
+        "service_account_json_first_char": raw_env_stripped[:1] if raw_env_stripped else None,
+        "service_account_json_last_char": raw_env_stripped[-1:] if raw_env_stripped else None,
+        "service_account_json_has_whitespace": any(ch.isspace() for ch in raw_env),
     }
 
     if not firestore_enabled:
