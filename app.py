@@ -116,11 +116,17 @@ def ensure_admin_user():
 ensure_admin_user()
 
 
+FS_INIT_ERROR = None
+
+
 def _init_firestore_client():
+    global FS_INIT_ERROR
     if firebase_admin is None or admin_firestore is None:
+        FS_INIT_ERROR = "firebase_admin module is not available"
         return None
     try:
         if firebase_admin._apps:
+            FS_INIT_ERROR = None
             return admin_firestore.client()
 
         service_account_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON")
@@ -136,8 +142,10 @@ def _init_firestore_client():
         else:
             firebase_admin.initialize_app()
 
+        FS_INIT_ERROR = None
         return admin_firestore.client()
     except Exception as e:
+        FS_INIT_ERROR = str(e)
         print(f"[WARN] Firestore init failed, fallback to local json: {e}")
         return None
 
@@ -392,6 +400,7 @@ def api_sync_status():
         "service_account_json_present": bool(os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON")),
         "service_account_path_present": bool(os.environ.get("FIREBASE_SERVICE_ACCOUNT_PATH")),
         "sync_uid": user_key or None,
+        "firestore_init_error": FS_INIT_ERROR,
     }
 
     if not firestore_enabled:
