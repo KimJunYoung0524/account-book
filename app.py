@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file, render_template
+from flask import Flask, request, jsonify, send_file, render_template, redirect
 import os
 import json
 import tempfile
@@ -6,6 +6,11 @@ import io
 import re
 import base64
 import ast
+import time
+import secrets
+from urllib.parse import urlencode, urlparse, parse_qsl, urlunparse
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
 from datetime import datetime, timezone
 import pandas as pd
 
@@ -13,10 +18,12 @@ try:
     import firebase_admin
     from firebase_admin import credentials
     from firebase_admin import firestore as admin_firestore
+    from firebase_admin import auth as admin_auth
 except Exception:
     firebase_admin = None
     credentials = None
     admin_firestore = None
+    admin_auth = None
 
 app = Flask(__name__)
 
@@ -227,6 +234,395 @@ def _firestore_project_id():
         return getattr(FS_CLIENT, "project", None)
     except Exception:
         return None
+
+
+def _ensure_firebase_app_for_auth():
+    if firebase_admin is None:
+        raise RuntimeError("firebase_admin module is not available")
+
+    if firebase_admin._apps:
+        return
+
+    service_account_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON")
+    service_account_path = os.environ.get("FIREBASE_SERVICE_ACCOUNT_PATH")
+
+    if service_account_json:
+        info = _parse_service_account_info(service_account_json)
+        cred = credentials.Certificate(info)
+        firebase_admin.initialize_app(cred)
+        return
+
+    if service_account_path and os.path.exists(service_account_path):
+        cred = credentials.Certificate(service_account_path)
+        firebase_admin.initialize_app(cred)
+        return
+
+    firebase_admin.initialize_app()
+
+
+def _make_firebase_custom_token(provider, provider_uid):
+    if admin_auth is None:
+        raise RuntimeError("firebase_admin.auth module is not available")
+
+    _ensure_firebase_app_for_auth()
+    provider_uid_str = str(provider_uid or "").strip()
+    if not provider_uid_str:
+        raise ValueError("provider uid is empty")
+
+    firebase_uid = f"{provider}:{provider_uid_str}"
+    claims = {"provider": provider, "providerUid": provider_uid_str}
+    custom_token = admin_auth.create_custom_token(firebase_uid, claims=claims)
+    if isinstance(custom_token, bytes):
+        return custom_token.decode("utf-8")
+    return str(custom_token)
+
+
+SOCIAL_STATE_TTL_SECONDS = int(os.environ.get("SOCIAL_STATE_TTL_SECONDS", "600"))
+SOCIAL_STATE_STORE = {}
+
+
+def _cleanup_social_states():
+    now_ts = time.time()
+    expired_keys = []
+    for key, info in SOCIAL_STATE_STORE.items():
+        created_at = float(info.get("created_at", 0) or 0)
+        if now_ts - created_at > SOCIAL_STATE_TTL_SECONDS:
+            expired_keys.append(key)
+    for key in expired_keys:
+        SOCIAL_STATE_STORE.pop(key, None)
+
+
+def _create_social_state(provider, app_redirect_uri, platform):
+    _cleanup_social_states()
+    state = secrets.token_urlsafe(24)
+    SOCIAL_STATE_STORE[state] = {
+        "provider": provider,
+        "app_redirect_uri": app_redirect_uri,
+        "platform": platform or "",
+        "created_at": time.time(),
+        "callback_received": False,
+        "auth_code": None,
+    }
+    return state
+
+
+def _get_social_state(state):
+    if not state:
+        return None
+    _cleanup_social_states()
+    return SOCIAL_STATE_STORE.get(str(state).strip())
+
+
+def _merge_query(url, params):
+    parsed = urlparse(url)
+    query_map = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    for key, value in (params or {}).items():
+        if value is None:
+            continue
+        query_map[str(key)] = str(value)
+    new_query = urlencode(query_map, doseq=True)
+    return urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment))
+
+
+def _safe_json_parse(text):
+    try:
+        return json.loads(text)
+    except Exception:
+        return None
+
+
+def _compact_error_text(text, limit=220):
+    raw = str(text or "").replace("\n", " ").strip()
+    if len(raw) <= limit:
+        return raw
+    return raw[:limit] + "..."
+
+
+def _http_post_form_json(url, form_data, headers=None, timeout=12):
+    body = urlencode(form_data or {}).encode("utf-8")
+    req_headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json",
+    }
+    if headers:
+        req_headers.update(headers)
+
+    req = Request(url, data=body, headers=req_headers, method="POST")
+    try:
+        with urlopen(req, timeout=timeout) as resp:
+            raw = resp.read().decode("utf-8", errors="ignore")
+            status = resp.getcode()
+    except HTTPError as e:
+        raw = e.read().decode("utf-8", errors="ignore")
+        status = e.code
+    except URLError as e:
+        raise RuntimeError(f"network error: {e}") from e
+
+    return status, _safe_json_parse(raw), raw
+
+
+def _http_get_json(url, headers=None, timeout=12):
+    req_headers = {"Accept": "application/json"}
+    if headers:
+        req_headers.update(headers)
+    req = Request(url, headers=req_headers, method="GET")
+
+    try:
+        with urlopen(req, timeout=timeout) as resp:
+            raw = resp.read().decode("utf-8", errors="ignore")
+            status = resp.getcode()
+    except HTTPError as e:
+        raw = e.read().decode("utf-8", errors="ignore")
+        status = e.code
+    except URLError as e:
+        raise RuntimeError(f"network error: {e}") from e
+
+    return status, _safe_json_parse(raw), raw
+
+
+def _social_provider_config(provider):
+    provider = str(provider or "").strip().lower()
+    if provider == "kakao":
+        return {
+            "provider": "kakao",
+            "client_id": os.environ.get("KAKAO_REST_API_KEY", ""),
+            "client_secret": os.environ.get("KAKAO_CLIENT_SECRET", ""),
+            "server_redirect_uri": os.environ.get(
+                "KAKAO_REDIRECT_URI",
+                "https://kimjunyoung-account-book.onrender.com/api/auth/social/kakao/callback",
+            ),
+            "authorize_url": "https://kauth.kakao.com/oauth/authorize",
+            "token_url": "https://kauth.kakao.com/oauth/token",
+            "userinfo_url": "https://kapi.kakao.com/v2/user/me",
+        }
+
+    if provider == "naver":
+        return {
+            "provider": "naver",
+            "client_id": os.environ.get("NAVER_CLIENT_ID", ""),
+            "client_secret": os.environ.get("NAVER_CLIENT_SECRET", ""),
+            "server_redirect_uri": os.environ.get(
+                "NAVER_REDIRECT_URI",
+                "https://kimjunyoung-account-book.onrender.com/api/auth/social/naver/callback",
+            ),
+            "authorize_url": "https://nid.naver.com/oauth2.0/authorize",
+            "token_url": "https://nid.naver.com/oauth2.0/token",
+            "userinfo_url": "https://openapi.naver.com/v1/nid/me",
+        }
+
+    return None
+
+
+def _build_provider_authorize_url(provider_cfg, state):
+    provider = provider_cfg["provider"]
+    common = {
+        "response_type": "code",
+        "client_id": provider_cfg["client_id"],
+        "redirect_uri": provider_cfg["server_redirect_uri"],
+        "state": state,
+    }
+
+    if provider == "kakao":
+        if provider_cfg.get("client_secret"):
+            common["client_secret"] = provider_cfg["client_secret"]
+    elif provider == "naver":
+        pass
+
+    return provider_cfg["authorize_url"] + "?" + urlencode(common)
+
+
+def _exchange_code_to_provider_profile(provider_cfg, code, state):
+    provider = provider_cfg["provider"]
+    token_form = {
+        "grant_type": "authorization_code",
+        "client_id": provider_cfg["client_id"],
+        "redirect_uri": provider_cfg["server_redirect_uri"],
+        "code": code,
+    }
+
+    if provider == "kakao":
+        if provider_cfg.get("client_secret"):
+            token_form["client_secret"] = provider_cfg["client_secret"]
+    elif provider == "naver":
+        token_form["client_secret"] = provider_cfg["client_secret"]
+        token_form["state"] = state
+
+    status, token_json, token_raw = _http_post_form_json(provider_cfg["token_url"], token_form)
+    access_token = None
+    if isinstance(token_json, dict):
+        access_token = token_json.get("access_token")
+    if status >= 400 or not access_token:
+        raise RuntimeError(f"{provider} token exchange failed: {_compact_error_text(token_raw)}")
+
+    profile_status, profile_json, profile_raw = _http_get_json(
+        provider_cfg["userinfo_url"],
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    if profile_status >= 400 or not isinstance(profile_json, dict):
+        raise RuntimeError(f"{provider} userinfo failed: {_compact_error_text(profile_raw)}")
+
+    if provider == "kakao":
+        provider_uid = str(profile_json.get("id") or "").strip()
+        account = profile_json.get("kakao_account") or {}
+        properties = profile_json.get("properties") or {}
+        profile_data = account.get("profile") or {}
+
+        email = account.get("email")
+        nickname = properties.get("nickname") or profile_data.get("nickname")
+        avatar_url = (
+            properties.get("profile_image")
+            or profile_data.get("profile_image_url")
+            or profile_data.get("thumbnail_image_url")
+        )
+    else:
+        response = profile_json.get("response") or {}
+        provider_uid = str(response.get("id") or "").strip()
+        email = response.get("email")
+        nickname = response.get("nickname") or response.get("name")
+        avatar_url = response.get("profile_image")
+
+    if not provider_uid:
+        raise RuntimeError(f"{provider} user id is missing from userinfo response")
+
+    return {
+        "provider": provider,
+        "providerUid": provider_uid,
+        "email": email or "",
+        "nickname": nickname or "",
+        "avatarUrl": avatar_url or "",
+    }
+
+
+def _social_start(provider):
+    provider_cfg = _social_provider_config(provider)
+    if not provider_cfg:
+        return jsonify({"success": False, "message": "지원하지 않는 provider 입니다."}), 400
+
+    missing_env = []
+    if not provider_cfg.get("client_id"):
+        missing_env.append(f"{provider.upper()} client id")
+    if not provider_cfg.get("server_redirect_uri"):
+        missing_env.append(f"{provider.upper()} redirect uri")
+    if provider == "naver" and not provider_cfg.get("client_secret"):
+        missing_env.append("NAVER_CLIENT_SECRET")
+    if missing_env:
+        return jsonify({
+            "success": False,
+            "message": f"{provider} 설정이 부족합니다.",
+            "missing": missing_env,
+        }), 500
+
+    app_redirect_uri = (
+        request.args.get("redirect_uri")
+        or os.environ.get("APP_DEEP_LINK_REDIRECT")
+        or "wet://oauth-callback/"
+    )
+    platform = request.args.get("platform", "")
+    state = _create_social_state(provider, app_redirect_uri, platform)
+    authorize_url = _build_provider_authorize_url(provider_cfg, state)
+    return redirect(authorize_url, code=302)
+
+
+def _social_callback(provider):
+    state = (request.args.get("state") or "").strip()
+    code = (request.args.get("code") or "").strip()
+    oauth_error = (request.args.get("error") or request.args.get("error_description") or "").strip()
+
+    state_info = _get_social_state(state)
+    if not state_info or state_info.get("provider") != provider:
+        return jsonify({"success": False, "message": "invalid state"}), 400
+
+    app_redirect_uri = state_info.get("app_redirect_uri") or "wet://oauth-callback/"
+
+    if oauth_error:
+        error_redirect = _merge_query(app_redirect_uri, {
+            "provider": provider,
+            "state": state,
+            "error": oauth_error,
+        })
+        return redirect(error_redirect, code=302)
+
+    if not code:
+        error_redirect = _merge_query(app_redirect_uri, {
+            "provider": provider,
+            "state": state,
+            "error": "missing_code",
+        })
+        return redirect(error_redirect, code=302)
+
+    state_info["callback_received"] = True
+    state_info["auth_code"] = code
+    state_info["callback_at"] = time.time()
+
+    ok_redirect = _merge_query(app_redirect_uri, {
+        "provider": provider,
+        "state": state,
+        "code": code,
+    })
+    return redirect(ok_redirect, code=302)
+
+
+def _social_exchange(provider):
+    req = request.get_json(silent=True) or {}
+    code = str(req.get("code") or "").strip()
+    state = str(req.get("state") or "").strip()
+    if not code or not state:
+        return jsonify({"success": False, "message": "code/state가 필요합니다."}), 400
+
+    state_info = _get_social_state(state)
+    if not state_info or state_info.get("provider") != provider:
+        return jsonify({"success": False, "message": "invalid state"}), 400
+
+    saved_code = str(state_info.get("auth_code") or "").strip()
+    if saved_code and saved_code != code:
+        return jsonify({"success": False, "message": "invalid code for this state"}), 400
+
+    provider_cfg = _social_provider_config(provider)
+    if not provider_cfg:
+        return jsonify({"success": False, "message": "지원하지 않는 provider 입니다."}), 400
+
+    try:
+        profile = _exchange_code_to_provider_profile(provider_cfg, code, state)
+        custom_token = _make_firebase_custom_token(provider, profile.get("providerUid"))
+    except Exception as e:
+        return jsonify({"success": False, "message": f"social exchange failed: {e}"}), 500
+
+    SOCIAL_STATE_STORE.pop(state, None)
+    return jsonify({
+        "success": True,
+        "customToken": custom_token,
+        "profile": profile,
+    })
+
+
+@app.route('/api/auth/social/kakao/start', methods=['GET'])
+def api_auth_social_kakao_start():
+    return _social_start("kakao")
+
+
+@app.route('/api/auth/social/kakao/callback', methods=['GET'])
+def api_auth_social_kakao_callback():
+    return _social_callback("kakao")
+
+
+@app.route('/api/auth/social/kakao/exchange', methods=['POST'])
+def api_auth_social_kakao_exchange():
+    return _social_exchange("kakao")
+
+
+@app.route('/api/auth/social/naver/start', methods=['GET'])
+def api_auth_social_naver_start():
+    return _social_start("naver")
+
+
+@app.route('/api/auth/social/naver/callback', methods=['GET'])
+def api_auth_social_naver_callback():
+    return _social_callback("naver")
+
+
+@app.route('/api/auth/social/naver/exchange', methods=['POST'])
+def api_auth_social_naver_exchange():
+    return _social_exchange("naver")
 
 
 def _normalize_user_key(user):
