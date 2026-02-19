@@ -287,6 +287,70 @@ def _make_firebase_custom_token(provider, provider_uid):
     return str(custom_token)
 
 
+def _clean_str(value):
+    return str(value or "").strip()
+
+
+def _clean_email(value):
+    email = _clean_str(value).strip('"').strip("'").strip().lower()
+    return email
+
+
+def _is_not_found_error(exc):
+    msg = str(exc or "").lower()
+    return "not found" in msg or "no user record" in msg or "user_not_found" in msg
+
+
+def _resolve_social_uid_and_sync_user(provider, profile):
+    """
+    같은 이메일의 기존 Firebase 계정이 있으면 그 UID로 통합.
+    없으면 provider 기반 UID를 사용.
+    """
+    if admin_auth is None:
+        raise RuntimeError("firebase_admin.auth module is not available")
+
+    _ensure_firebase_app_for_auth()
+
+    provider_uid = _clean_str(profile.get("providerUid"))
+    if not provider_uid:
+        raise ValueError("provider uid is empty")
+
+    default_uid = f"{provider}:{provider_uid}"
+    email = _clean_email(profile.get("email"))
+    nickname = _clean_str(profile.get("nickname"))
+
+    resolved_uid = default_uid
+    if email:
+        try:
+            resolved_uid = admin_auth.get_user_by_email(email).uid
+        except Exception as e:
+            if not _is_not_found_error(e):
+                raise
+
+    try:
+        existing = admin_auth.get_user(resolved_uid)
+        updates = {}
+        if email and not _clean_str(getattr(existing, "email", "")):
+            updates["email"] = email
+            updates["email_verified"] = True
+        if nickname and not _clean_str(getattr(existing, "display_name", "")):
+            updates["display_name"] = nickname
+        if updates:
+            admin_auth.update_user(resolved_uid, **updates)
+    except Exception as e:
+        if not _is_not_found_error(e):
+            raise
+        create_payload = {"uid": resolved_uid}
+        if email:
+            create_payload["email"] = email
+            create_payload["email_verified"] = True
+        if nickname:
+            create_payload["display_name"] = nickname
+        admin_auth.create_user(**create_payload)
+
+    return resolved_uid, email
+
+
 SOCIAL_STATE_TTL_SECONDS = int(os.environ.get("SOCIAL_STATE_TTL_SECONDS", "600"))
 SOCIAL_STATE_STORE = {}
 
@@ -593,7 +657,24 @@ def _social_exchange(provider):
 
     try:
         profile = _exchange_code_to_provider_profile(provider_cfg, code, state)
+        resolved_uid, normalized_email = _resolve_social_uid_and_sync_user(provider, profile)
+        if normalized_email:
+            profile["email"] = normalized_email
         custom_token = _make_firebase_custom_token(provider, profile.get("providerUid"))
+        # 같은 이메일 기존 계정으로 통합된 경우, 해당 UID로 로그인시키기 위해 토큰 UID를 재발급
+        if resolved_uid != f"{provider}:{str(profile.get('providerUid') or '').strip()}":
+            claims = {
+                "provider": provider,
+                "providerUid": str(profile.get("providerUid") or "").strip(),
+            }
+            try:
+                raw = admin_auth.create_custom_token(resolved_uid, claims=claims)
+            except TypeError:
+                try:
+                    raw = admin_auth.create_custom_token(resolved_uid, developer_claims=claims)
+                except TypeError:
+                    raw = admin_auth.create_custom_token(resolved_uid)
+            custom_token = raw.decode("utf-8") if isinstance(raw, bytes) else str(raw)
     except Exception as e:
         return jsonify({"success": False, "message": f"social exchange failed: {e}"}), 500
 
