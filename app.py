@@ -271,7 +271,17 @@ def _make_firebase_custom_token(provider, provider_uid):
 
     firebase_uid = f"{provider}:{provider_uid_str}"
     claims = {"provider": provider, "providerUid": provider_uid_str}
-    custom_token = admin_auth.create_custom_token(firebase_uid, claims=claims)
+    # firebase-admin 버전에 따라 인자명이 다릅니다.
+    # - newer: claims=
+    # - older: developer_claims=
+    try:
+        custom_token = admin_auth.create_custom_token(firebase_uid, claims=claims)
+    except TypeError:
+        try:
+            custom_token = admin_auth.create_custom_token(firebase_uid, developer_claims=claims)
+        except TypeError:
+            # 매우 구버전 firebase-admin 대비(커스텀 클레임 생략)
+            custom_token = admin_auth.create_custom_token(firebase_uid)
     if isinstance(custom_token, bytes):
         return custom_token.decode("utf-8")
     return str(custom_token)
