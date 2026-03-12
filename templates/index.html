@@ -672,7 +672,9 @@
         "지출": ["식비", "교통", "주거", "통신", "쇼핑", "문화생활", "교육", "의료/건강", "기타지출"]
     };
 
-    const syncUidFromQuery = new URLSearchParams(window.location.search).get('sync_uid');
+    const queryParams = new URLSearchParams(window.location.search);
+    const syncUidFromQuery = queryParams.get('sync_uid');
+    const syncProjectFromQuery = (queryParams.get('sync_project') || '').trim();
     const syncMode = !!syncUidFromQuery;
 
     let loginUser = 'guest';
@@ -681,6 +683,29 @@
 
     function activeUser() {
         return syncMode ? syncUidFromQuery : currentUser;
+    }
+
+    function activeSyncProject() {
+        return syncProjectFromQuery;
+    }
+
+    function withSyncProject(payload = {}) {
+        const project = activeSyncProject();
+        if (!project) return payload;
+        return { ...payload, sync_project: project };
+    }
+
+    function buildApiUrl(path, extraParams = {}) {
+        const url = new URL(path, window.location.origin);
+        Object.entries(extraParams || {}).forEach(([k, v]) => {
+            if (v === null || v === undefined || v === '') return;
+            url.searchParams.set(k, String(v));
+        });
+        const project = activeSyncProject();
+        if (project) {
+            url.searchParams.set('sync_project', project);
+        }
+        return `${url.pathname}${url.search}`;
     }
 
     const form = document.getElementById('account-form');
@@ -1024,7 +1049,7 @@
 
     async function fetchList() {
         try {
-            const res = await fetch('/api/list?user=' + encodeURIComponent(activeUser()));
+            const res = await fetch(buildApiUrl('/api/list', { user: activeUser() }));
             const data = await res.json();
             if (data.success) {
                 allItems = data.items || [];
@@ -1058,17 +1083,17 @@
         }
 
         try {
-            const res = await fetch('/api/add', {
+            const res = await fetch(buildApiUrl('/api/add'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json;charset=utf-8' },
-                body: JSON.stringify({
+                body: JSON.stringify(withSyncProject({
                     date: date,
                     amount: amount,
                     main_category: mainCategory,
                     sub_category: subCategory,
                     memo: memo,
                     user: activeUser()
-                })
+                }))
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
@@ -1089,15 +1114,15 @@
     }
 
     function downloadExcel() {
-        window.location.href = '/api/download?user=' + encodeURIComponent(activeUser());
+        window.location.href = buildApiUrl('/api/download', { user: activeUser() });
     }
 
     async function deleteItem(id) {
         try {
-            const res = await fetch('/api/delete', {
+            const res = await fetch(buildApiUrl('/api/delete'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json;charset=utf-8' },
-                body: JSON.stringify({ id: id, user: activeUser() })
+                body: JSON.stringify(withSyncProject({ id: id, user: activeUser() }))
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
@@ -1114,10 +1139,10 @@
     async function clearEntriesForUser() {
         if (!confirm(`현재 조회 사용자(${activeUser()})의 모든 내역을 삭제할까요?`)) return;
         try {
-            const res = await fetch('/api/clear_entries', {
+            const res = await fetch(buildApiUrl('/api/clear_entries'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json;charset=utf-8' },
-                body: JSON.stringify({ user: activeUser() })
+                body: JSON.stringify(withSyncProject({ user: activeUser() }))
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
@@ -1142,10 +1167,10 @@
         }
         if (!confirm(`"${currentUser}" 사용자를 삭제하면 해당 사용자의 모든 내역도 삭제됩니다. 계속할까요?`)) return;
         try {
-            const res = await fetch('/api/delete_user', {
+            const res = await fetch(buildApiUrl('/api/delete_user'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json;charset=utf-8' },
-                body: JSON.stringify({ user: currentUser })
+                body: JSON.stringify(withSyncProject({ user: currentUser }))
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
@@ -1189,7 +1214,7 @@
     async function loadAdminUsers() {
         if (syncMode) return;
         try {
-            const res = await fetch('/api/users_for_admin');
+            const res = await fetch(buildApiUrl('/api/users_for_admin'));
             const data = await res.json();
             if (!res.ok || !data.success) return;
             const users = data.users || [];
@@ -1228,7 +1253,7 @@
         formData.append('default_sub', defaultSub);
 
         try {
-            const res = await fetch('/api/import', {
+            const res = await fetch(buildApiUrl('/api/import', { sync_project: activeSyncProject() }), {
                 method: 'POST',
                 body: formData
             });
@@ -1286,10 +1311,10 @@
             return;
         }
         try {
-            const res = await fetch('/api/user_login', {
+            const res = await fetch(buildApiUrl('/api/user_login'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json;charset=utf-8' },
-                body: JSON.stringify({ user, password })
+                body: JSON.stringify(withSyncProject({ user, password }))
             });
             const data = await res.json();
             if (data.success) {
@@ -1310,10 +1335,10 @@
             if (data.need_register) {
                 const ok = confirm(`"${user}"는 등록되지 않은 사용자입니다.\n지금 입력한 비밀번호로 새 사용자를 만들까요?`);
                 if (!ok) return;
-                const res2 = await fetch('/api/user_register', {
+                const res2 = await fetch(buildApiUrl('/api/user_register'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json;charset=utf-8' },
-                    body: JSON.stringify({ user, password })
+                    body: JSON.stringify(withSyncProject({ user, password }))
                 });
                 const data2 = await res2.json();
                 if (!res2.ok || !data2.success) {

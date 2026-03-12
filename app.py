@@ -125,7 +125,33 @@ def ensure_admin_user():
 ensure_admin_user()
 
 
-FS_INIT_ERROR = None
+FS_INIT_ERROR = {}
+RELEASE_EXPECTED_PROJECT = os.environ.get("FIREBASE_EXPECTED_PROJECT", "wet-project-3fd3b")
+DEMO_EXPECTED_PROJECT = os.environ.get("FIREBASE_DEMO_EXPECTED_PROJECT", "wet-demo-project")
+
+SYNC_TARGET_CONFIGS = {
+    "release": {
+        "app_name": "fs-release",
+        "service_json_env": "FIREBASE_SERVICE_ACCOUNT_JSON",
+        "service_path_env": "FIREBASE_SERVICE_ACCOUNT_PATH",
+        "expected_project": RELEASE_EXPECTED_PROJECT,
+        "allow_default_credentials": True,
+    },
+    "demo": {
+        "app_name": "fs-demo",
+        "service_json_env": "FIREBASE_DEMO_SERVICE_ACCOUNT_JSON",
+        "service_path_env": "FIREBASE_DEMO_SERVICE_ACCOUNT_PATH",
+        "expected_project": DEMO_EXPECTED_PROJECT,
+        "allow_default_credentials": False,
+    },
+}
+
+SYNC_PROJECT_TO_TARGET = {
+    "release": "release",
+    "demo": "demo",
+    str(RELEASE_EXPECTED_PROJECT).strip().lower(): "release",
+    str(DEMO_EXPECTED_PROJECT).strip().lower(): "demo",
+}
 
 
 def _parse_service_account_info(raw_value):
@@ -189,49 +215,95 @@ def _parse_service_account_info(raw_value):
     raise ValueError("Invalid FIREBASE_SERVICE_ACCOUNT_JSON format (not json object / not base64 json)")
 
 
-def _init_firestore_client():
+def _init_firestore_client(target):
     global FS_INIT_ERROR
+    target_key = str(target or "release").strip().lower()
+    cfg = SYNC_TARGET_CONFIGS.get(target_key)
+    if not cfg:
+        FS_INIT_ERROR[target_key] = f"unsupported sync target: {target_key}"
+        return None
     if firebase_admin is None or admin_firestore is None:
-        FS_INIT_ERROR = "firebase_admin module is not available"
+        FS_INIT_ERROR[target_key] = "firebase_admin module is not available"
         return None
     try:
-        if firebase_admin._apps:
-            FS_INIT_ERROR = None
-            return admin_firestore.client()
+        app_name = cfg["app_name"]
+        expected_project = str(cfg.get("expected_project") or "").strip()
+        service_account_json = os.environ.get(cfg["service_json_env"])
+        service_account_path = os.environ.get(cfg["service_path_env"])
+        allow_default_credentials = bool(cfg.get("allow_default_credentials"))
 
-        service_account_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON")
-        service_account_path = os.environ.get("FIREBASE_SERVICE_ACCOUNT_PATH")
+        app = None
+        try:
+            app = firebase_admin.get_app(name=app_name)
+        except Exception:
+            app = None
 
         if service_account_json:
             info = _parse_service_account_info(service_account_json)
             cred = credentials.Certificate(info)
-            firebase_admin.initialize_app(cred)
+            if app is None:
+                app = firebase_admin.initialize_app(cred, name=app_name)
         elif service_account_path and os.path.exists(service_account_path):
             cred = credentials.Certificate(service_account_path)
-            firebase_admin.initialize_app(cred)
+            if app is None:
+                app = firebase_admin.initialize_app(cred, name=app_name)
         else:
-            firebase_admin.initialize_app()
+            if not allow_default_credentials:
+                FS_INIT_ERROR[target_key] = (
+                    f"{target_key} service account is missing "
+                    f"({cfg['service_json_env']} / {cfg['service_path_env']})"
+                )
+                return None
+            if app is None:
+                app = firebase_admin.initialize_app(name=app_name)
 
-        FS_INIT_ERROR = None
-        return admin_firestore.client()
+        if app is None:
+            app = firebase_admin.get_app(name=app_name)
+
+        client = admin_firestore.client(app=app)
+        actual_project = str(getattr(client, "project", "") or "").strip()
+        if expected_project and actual_project and actual_project != expected_project:
+            FS_INIT_ERROR[target_key] = (
+                f"{target_key} project mismatch: expected={expected_project} actual={actual_project}"
+            )
+            return None
+
+        FS_INIT_ERROR[target_key] = None
+        return client
     except Exception as e:
-        FS_INIT_ERROR = str(e)
-        print(f"[WARN] Firestore init failed, fallback to local json: {e}")
+        FS_INIT_ERROR[target_key] = str(e)
+        print(f"[WARN] Firestore init failed ({target_key}), fallback to local json: {e}")
         return None
 
 
-FS_CLIENT = _init_firestore_client()
+FS_CLIENTS = {
+    "release": _init_firestore_client("release"),
+    "demo": _init_firestore_client("demo"),
+}
 
 
-def _is_firestore_enabled():
-    return FS_CLIENT is not None
+def _resolve_sync_target(sync_project):
+    value = str(sync_project or "").strip().lower()
+    if not value:
+        return "release"
+    return SYNC_PROJECT_TO_TARGET.get(value, "release")
 
 
-def _firestore_project_id():
-    if FS_CLIENT is None:
+def _selected_firestore_client(sync_project=None):
+    target = _resolve_sync_target(sync_project)
+    return FS_CLIENTS.get(target)
+
+
+def _is_firestore_enabled(sync_project=None):
+    return _selected_firestore_client(sync_project) is not None
+
+
+def _firestore_project_id(sync_project=None):
+    client = _selected_firestore_client(sync_project)
+    if client is None:
         return None
     try:
-        return getattr(FS_CLIENT, "project", None)
+        return getattr(client, "project", None)
     except Exception:
         return None
 
@@ -240,8 +312,11 @@ def _ensure_firebase_app_for_auth():
     if firebase_admin is None:
         raise RuntimeError("firebase_admin module is not available")
 
-    if firebase_admin._apps:
+    try:
+        firebase_admin.get_app()
         return
+    except Exception:
+        pass
 
     service_account_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON")
     service_account_path = os.environ.get("FIREBASE_SERVICE_ACCOUNT_PATH")
@@ -405,6 +480,24 @@ def _safe_json_parse(text):
         return None
 
 
+def _decode_jwt_payload_unverified(jwt_token):
+    token = str(jwt_token or "").strip()
+    if not token:
+        return {}
+    parts = token.split(".")
+    if len(parts) < 2:
+        return {}
+    payload = parts[1]
+    pad = (-len(payload)) % 4
+    payload_padded = payload + ("=" * pad)
+    try:
+        decoded = base64.urlsafe_b64decode(payload_padded.encode("utf-8")).decode("utf-8")
+        parsed = json.loads(decoded)
+        return parsed if isinstance(parsed, dict) else {}
+    except Exception:
+        return {}
+
+
 def _compact_error_text(text, limit=220):
     raw = str(text or "").replace("\n", " ").strip()
     if len(raw) <= limit:
@@ -499,6 +592,13 @@ def _build_provider_authorize_url(provider_cfg, state):
     if provider == "kakao":
         if provider_cfg.get("client_secret"):
             common["client_secret"] = provider_cfg["client_secret"]
+        # 이메일 수집을 위해 기본 scope에 account_email 포함
+        kakao_scope = os.environ.get(
+            "KAKAO_OAUTH_SCOPE",
+            "openid profile_nickname account_email",
+        ).strip()
+        if kakao_scope:
+            common["scope"] = kakao_scope
     elif provider == "naver":
         pass
 
@@ -541,7 +641,13 @@ def _exchange_code_to_provider_profile(provider_cfg, code, state):
         properties = profile_json.get("properties") or {}
         profile_data = account.get("profile") or {}
 
-        email = account.get("email")
+        email = _clean_email(account.get("email"))
+        # account_email 미응답 시 id_token 클레임에서 이메일 보조 추출
+        if not email:
+            token_claims = _decode_jwt_payload_unverified(
+                token_json.get("id_token") if isinstance(token_json, dict) else ""
+            )
+            email = _clean_email(token_claims.get("email"))
         nickname = properties.get("nickname") or profile_data.get("nickname")
         avatar_url = (
             properties.get("profile_image")
@@ -721,9 +827,34 @@ def _normalize_user_key(user):
     return value or "guest"
 
 
-def _entries_ref(user):
+def _extract_sync_project_from_request():
+    value = request.args.get("sync_project")
+    if value:
+        return value
+
+    json_payload = request.get_json(silent=True) or {}
+    if isinstance(json_payload, dict):
+        value = json_payload.get("sync_project")
+        if value:
+            return value
+
+    value = request.form.get("sync_project")
+    if value:
+        return value
+
+    value = request.headers.get("X-Sync-Project")
+    if value:
+        return value
+
+    return ""
+
+
+def _entries_ref(user, sync_project=None):
+    client = _selected_firestore_client(sync_project)
+    if client is None:
+        return None
     user_key = _normalize_user_key(user)
-    return FS_CLIENT.collection("accountBooks").document(user_key).collection("entries")
+    return client.collection("accountBooks").document(user_key).collection("entries")
 
 
 def _parse_date_for_firestore(date_value):
@@ -808,10 +939,13 @@ def _firestore_to_legacy_item(user, doc_id, raw):
     }
 
 
-def _list_items(user):
+def _list_items(user, sync_project=None):
     user_key = _normalize_user_key(user)
-    if _is_firestore_enabled():
-        docs = _entries_ref(user_key).stream()
+    if _is_firestore_enabled(sync_project):
+        entries = _entries_ref(user_key, sync_project=sync_project)
+        if entries is None:
+            return []
+        docs = entries.stream()
         items = []
         for doc in docs:
             items.append(_firestore_to_legacy_item(user_key, doc.id, doc.to_dict()))
@@ -822,11 +956,14 @@ def _list_items(user):
     return [d for d in data if d.get("user", "guest") == user_key]
 
 
-def _add_item(user, item):
+def _add_item(user, item, sync_project=None):
     user_key = _normalize_user_key(user)
-    if _is_firestore_enabled():
+    if _is_firestore_enabled(sync_project):
         payload = _legacy_to_firestore_payload(user_key, item)
-        ref = _entries_ref(user_key).document()
+        entries = _entries_ref(user_key, sync_project=sync_project)
+        if entries is None:
+            raise RuntimeError("firestore entries ref is not available")
+        ref = entries.document()
         ref.set(payload)
         return _firestore_to_legacy_item(user_key, ref.id, payload)
 
@@ -840,15 +977,18 @@ def _add_item(user, item):
     return new_item
 
 
-def _add_items_bulk(user, items):
+def _add_items_bulk(user, items, sync_project=None):
     user_key = _normalize_user_key(user)
     if not items:
         return 0
 
-    if _is_firestore_enabled():
+    if _is_firestore_enabled(sync_project):
+        entries = _entries_ref(user_key, sync_project=sync_project)
+        if entries is None:
+            return 0
         for item in items:
             payload = _legacy_to_firestore_payload(user_key, item)
-            _entries_ref(user_key).document().set(payload)
+            entries.document().set(payload)
         return len(items)
 
     data = load_data()
@@ -863,13 +1003,16 @@ def _add_items_bulk(user, items):
     return len(items)
 
 
-def _delete_item(user, item_id):
+def _delete_item(user, item_id, sync_project=None):
     user_key = _normalize_user_key(user)
-    if _is_firestore_enabled():
+    if _is_firestore_enabled(sync_project):
         target_id = str(item_id).strip()
         if not target_id:
             return False
-        doc_ref = _entries_ref(user_key).document(target_id)
+        entries = _entries_ref(user_key, sync_project=sync_project)
+        if entries is None:
+            return False
+        doc_ref = entries.document(target_id)
         doc = doc_ref.get()
         if not doc.exists:
             return False
@@ -902,10 +1045,13 @@ def _delete_item(user, item_id):
     return deleted
 
 
-def _clear_items_for_user(user):
+def _clear_items_for_user(user, sync_project=None):
     user_key = _normalize_user_key(user)
-    if _is_firestore_enabled():
-        docs = list(_entries_ref(user_key).stream())
+    if _is_firestore_enabled(sync_project):
+        entries = _entries_ref(user_key, sync_project=sync_project)
+        if entries is None:
+            return
+        docs = list(entries.stream())
         if not docs:
             return
         for doc in docs:
@@ -917,11 +1063,12 @@ def _clear_items_for_user(user):
     save_data(new_data)
 
 
-def _list_all_users_for_admin():
+def _list_all_users_for_admin(sync_project=None):
     names = set(load_users().keys())
 
-    if _is_firestore_enabled():
-        for doc in FS_CLIENT.collection("accountBooks").stream():
+    client = _selected_firestore_client(sync_project)
+    if client is not None:
+        for doc in client.collection("accountBooks").stream():
             names.add(doc.id)
     else:
         data = load_data()
@@ -935,22 +1082,29 @@ def _list_all_users_for_admin():
 
 @app.route('/api/sync_status', methods=['GET'])
 def api_sync_status():
-    expected_project = os.environ.get("FIREBASE_EXPECTED_PROJECT", "wet-project-3fd3b")
+    sync_project = _extract_sync_project_from_request()
+    sync_target = _resolve_sync_target(sync_project)
+    cfg = SYNC_TARGET_CONFIGS.get(sync_target, SYNC_TARGET_CONFIGS["release"])
+    expected_project = cfg.get("expected_project")
     user_key = request.args.get('sync_uid') or request.args.get('user') or ''
     user_key = _normalize_user_key(user_key) if user_key else ''
 
-    firestore_enabled = _is_firestore_enabled()
-    project_id = _firestore_project_id()
-    raw_env = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON") or ""
+    firestore_enabled = _is_firestore_enabled(sync_project)
+    project_id = _firestore_project_id(sync_project)
+    raw_env = os.environ.get(cfg["service_json_env"]) or ""
     raw_env_stripped = raw_env.strip()
     status = {
         "success": True,
+        "sync_project_input": sync_project or None,
+        "sync_target": sync_target,
         "firestore_enabled": firestore_enabled,
         "firestore_project_id": project_id,
         "expected_project_id": expected_project,
         "project_match": bool(project_id) and project_id == expected_project,
-        "service_account_json_present": bool(os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON")),
-        "service_account_path_present": bool(os.environ.get("FIREBASE_SERVICE_ACCOUNT_PATH")),
+        "service_account_json_env": cfg["service_json_env"],
+        "service_account_path_env": cfg["service_path_env"],
+        "service_account_json_present": bool(os.environ.get(cfg["service_json_env"])),
+        "service_account_path_present": bool(os.environ.get(cfg["service_path_env"])),
         "sync_uid": user_key or None,
         "firestore_init_error": FS_INIT_ERROR,
         # Safe env diagnostics (never include secret).
@@ -966,7 +1120,8 @@ def api_sync_status():
 
     if user_key:
         try:
-            docs = list(_entries_ref(user_key).limit(5).stream())
+            entries = _entries_ref(user_key, sync_project=sync_project)
+            docs = list(entries.limit(5).stream()) if entries is not None else []
             status["entries_preview_count"] = len(docs)
             status["entries_preview_ids"] = [d.id for d in docs]
         except Exception as e:
@@ -1273,21 +1428,24 @@ def api_user_register():
 @app.route('/api/users_for_admin', methods=['GET'])
 def api_users_for_admin():
     """관리자 화면에서 조회할 수 있는 사용자 목록"""
-    user_list = _list_all_users_for_admin()
+    sync_project = _extract_sync_project_from_request()
+    user_list = _list_all_users_for_admin(sync_project=sync_project)
     return jsonify({"success": True, "users": user_list})
 
 
 # ------------------ 가계부 CRUD ------------------
 @app.route('/api/list', methods=['GET'])
 def api_list():
+    sync_project = _extract_sync_project_from_request()
     user = request.args.get('user', 'guest')
-    data = _list_items(user)
+    data = _list_items(user, sync_project=sync_project)
     return jsonify({"success": True, "items": data})
 
 
 @app.route('/api/add', methods=['POST'])
 def api_add():
-    req = request.get_json()
+    req = request.get_json() or {}
+    sync_project = str(req.get("sync_project") or _extract_sync_project_from_request() or "").strip()
     required = ['date', 'amount', 'memo', 'main_category', 'sub_category']
     if not req or any(f not in req or req[f] == "" for f in required):
         return jsonify({"success": False, "message": "필수 항목이 누락되었습니다."}), 400
@@ -1305,18 +1463,19 @@ def api_add():
         "main_category": req['main_category'],
         "sub_category": req['sub_category']
     }
-    new_item = _add_item(user, item)
+    new_item = _add_item(user, item, sync_project=sync_project)
     return jsonify({"success": True, "item": new_item})
 
 
 @app.route('/api/delete', methods=['POST'])
 def api_delete():
-    req = request.get_json()
+    req = request.get_json() or {}
+    sync_project = str(req.get("sync_project") or _extract_sync_project_from_request() or "").strip()
     if not req or 'id' not in req:
         return jsonify({"success": False, "message": "ID가 필요합니다."}), 400
 
     user = req.get('user', 'guest')
-    deleted = _delete_item(user, req.get('id'))
+    deleted = _delete_item(user, req.get('id'), sync_project=sync_project)
     if not deleted:
         return jsonify({"success": False, "message": "항목을 찾을 수 없습니다."}), 404
     return jsonify({"success": True})
@@ -1324,12 +1483,13 @@ def api_delete():
 
 @app.route('/api/clear_entries', methods=['POST'])
 def api_clear_entries():
-    req = request.get_json()
+    req = request.get_json() or {}
+    sync_project = str(req.get("sync_project") or _extract_sync_project_from_request() or "").strip()
     if not req or 'user' not in req:
         return jsonify({"success": False, "message": "user가 필요합니다."}), 400
 
     user = req.get('user')
-    _clear_items_for_user(user)
+    _clear_items_for_user(user, sync_project=sync_project)
     return jsonify({"success": True})
 
 
@@ -1340,6 +1500,7 @@ def api_delete_user():
     - 관리자 '김준영' (비번 $Sin10029187 로 로그인한 상태) → 삭제 불가
     """
     req = request.get_json() or {}
+    sync_project = str(req.get("sync_project") or _extract_sync_project_from_request() or "").strip()
     if 'user' not in req:
         return jsonify({"success": False, "message": "user가 필요합니다."}), 400
 
@@ -1355,7 +1516,7 @@ def api_delete_user():
         return jsonify({"success": False, "message": "관리자 계정은 삭제할 수 없습니다."}), 400
 
     # 그 외에는 모두 삭제 허용 (일반 유저 김준영 포함)
-    _clear_items_for_user(user_to_delete)
+    _clear_items_for_user(user_to_delete, sync_project=sync_project)
 
     users = load_users()
     if user_to_delete in users:
@@ -1367,8 +1528,9 @@ def api_delete_user():
 
 @app.route('/api/download', methods=['GET'])
 def api_download():
+    sync_project = _extract_sync_project_from_request()
     user = request.args.get('user', 'guest')
-    data = _list_items(user)
+    data = _list_items(user, sync_project=sync_project)
 
     if not data:
         df = pd.DataFrame(columns=["날짜", "금액", "내용", "대분류", "소분류"])
@@ -1392,6 +1554,7 @@ def api_download():
 # ------------------ CSV/XLS/XLSX IMPORT ------------------
 @app.route('/api/import', methods=['POST'])
 def api_import():
+    sync_project = _extract_sync_project_from_request()
     if 'file' not in request.files:
         return jsonify({"success": False, "message": "CSV/엑셀 파일이 전송되지 않았습니다."}), 400
 
@@ -1518,7 +1681,7 @@ def api_import():
                 "message": "유효한 내역을 찾지 못했습니다. 컬럼 구성을 확인해 주세요."
             }), 400
 
-        _add_items_bulk(user, items_to_add)
+        _add_items_bulk(user, items_to_add, sync_project=sync_project)
         return jsonify({"success": True, "imported": imported_count})
 
     # ------------------ 1) 엑셀: xlsx ------------------
@@ -1633,7 +1796,7 @@ def api_import():
             imported_count += 1
         if imported_count == 0:
             return jsonify({"success": False, "message": "유효한 내역을 찾지 못했습니다. CSV 내용을 확인해 주세요."}), 400
-        _add_items_bulk(user, items_to_add)
+        _add_items_bulk(user, items_to_add, sync_project=sync_project)
         return jsonify({"success": True, "imported": imported_count})
 
     # ------------------ 4) (기존) CSV: 국민은행 블록 포맷 시도 ------------------
@@ -1653,7 +1816,7 @@ def api_import():
             imported_count += 1
         if imported_count == 0:
             return jsonify({"success": False, "message": "유효한 내역을 찾지 못했습니다. CSV 내용을 확인해 주세요."}), 400
-        _add_items_bulk(user, items_to_add)
+        _add_items_bulk(user, items_to_add, sync_project=sync_project)
         return jsonify({"success": True, "imported": imported_count})
 
     # ------------------ 5) (기존) 일반 CSV ------------------
